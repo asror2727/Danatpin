@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yopish</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="topbar">
+    <div class="topbar-left" id="openProfile">
+      <img id="avatar" class="avatar" src="" alt="">
+      <div class="hello">
+        <div class="hello-line">Salom 👋</div>
+        <div class="hello-name" id="userName">...</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="pill-btn" id="langBtn">UZ</button>
+      <button class="icon-btn" id="themeBtn">🌙</button>
+    </div>
+  </header>
+
+  <!-- ===================== HOME VIEW ===================== -->
+  <main class="view" id="view-home">
+
+    <section class="balance-card">
+      <div class="balance-info">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <button class="btn-primary" id="topupBtnHome">➕ To'ldirish</button>
+    </section>
+
+    <section class="quick-actions">
+      <a class="quick-btn" id="channelBtn" href="#">📢 Kanal</a>
+      <a class="quick-btn" id="supportBtn" href="#">🆘 Yordam</a>
+    </section>
+
+    <section class="banner-wrap">
+      <div class="banner-track" id="bannerTrack"></div>
+      <div class="banner-dots" id="bannerDots"></div>
+    </section>
+
+    <section class="section-head">
+      <h2>🎮 Oyinlar mashhur</h2>
+      <button class="link-btn" id="seeAllGames">Barchasi</button>
+    </section>
+    <div class="games-grid" id="gamesGrid"></div>
+
+    <section class="section-head">
+      <h2>💬 Odamlar fikri</h2>
+    </section>
+    <div class="reviews-list" id="reviewsList"></div>
+    <button class="btn-secondary full" id="leaveReviewBtn">✍️ Fikr qoldirish</button>
+
+  </main>
+
+  <!-- ===================== TOP VIEW ===================== -->
+  <main class="view hidden" id="view-top">
+    <h1 class="page-title">🏆 TOP Xaridorlar</h1>
+    <div class="leaderboard" id="leaderboardList"></div>
+  </main>
+
+  <!-- ===================== HISOB (TOPUP) VIEW ===================== -->
+  <main class="view hidden" id="view-hisob">
+
+    <div id="hisob-step-methods">
+      <h1 class="page-title">💳 Balansni to'ldirish</h1>
+      <div class="balance-card small">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue2">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <h3 class="sub-title">To'lov usuli</h3>
+      <div class="methods-grid">
+        <button class="method-card" data-method="UZCARD">💳 <span>UZCARD</span></button>
+        <button class="method-card" data-method="HUMO">💳 <span>HUMO</span></button>
+      </div>
+      <p class="hint">Eng kam summa: 1 000 so'm</p>
+    </div>
+
+    <div id="hisob-step-amount" class="hidden">
+      <h1 class="page-title"><span id="chosenMethod">UZCARD</span></h1>
+      <h3 class="sub-title">Summani kiriting</h3>
+      <input type="tel" inputmode="numeric" id="amountInput" class="amount-input" placeholder="0">
+      <div class="amount-presets">
+        <button class="chip" data-amt="50000">50k</button>
+        <button class="chip" data-amt="100000">100k</button>
+        <button class="chip" data-amt="200000">200k</button>
+        <button class="chip" data-amt="500000">500k</button>
+      </div>
+      <button class="btn-primary full" id="goToPayment">Davom etish</button>
+      <button class="btn-secondary full" id="backToMethods">⬅ Orqaga</button>
+    </div>
+
+    <div id="hisob-step-pay" class="hidden">
+      <h1 class="page-title">To'lov</h1>
+      <p class="sub-title">Aynan <b id="payAmount">0</b> so'm o'tkazing</p>
+      <div class="timer-wrap">
+        <span>⏱ Karta amal qiladi</span>
+        <span id="payTimer">3:00</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+      <div class="card-box">
+        <div class="card-label">Karta raqami</div>
+        <div class="card-number" id="cardNumber">-</div>
+        <div class="card-holder-row">
+          <span class="badge" id="cardBank">UZCARD</span>
+          <span id="cardHolder"></span>
+        </div>
+        <button class="btn-secondary full" id="copyCardBtn">📋 Nusxa olish</button>
+      </div>
+
+      <div class="rules-box">
+        <div class="rule ok">✅ Summani 1 so'mga ham o'zgartirmang</div>
+        <div class="rule ok">✅ Belgilangan vaqtda to'lang</div>
+        <div class="rule bad">❌ Boshqa summa yubormang</div>
+      </div>
+
+      <button class="btn-confirm full" id="confirmPaidBtn">✅ To'lovni amalga oshirdim</button>
+    </div>
+
+  </main>
+
+  <!-- ===================== BUYURTMALAR VIEW ===================== -->
+  <main class="view hidden" id="view-orders">
+    <h1 class="page-title">🧾 Buyurtmalarim</h1>
+    <div class="orders-list" id="ordersList"></div>
+  </main>
+
+  <!-- ===================== PROFIL VIEW ===================== -->
+  <main class="view hidden" id="view-profile">
+    <div class="profile-hero">
+      <img id="avatarBig" class="avatar-big" src="" alt="">
+      <div class="profile-name" id="profileName">...</div>
+      <div class="profile-id" id="profileId">ID: -</div>
+    </div>
+
+    <div class="balance-card small">
+      <div class="balance-info">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue3">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <button class="btn-primary" id="topupBtnProfile">➕ To'ldirish</button>
+    </div>
+
+    <button class="row-card" id="inviteBtn">
+      <span>🤝 Do'st taklif qiling — bonus oling</span>
+      <span class="chevron">›</span>
+    </button>
+    <button class="row-card" id="topDonatersBtn">
+      <span>🏅 Top donaterlar</span>
+      <span class="chevron">›</span>
+    </button>
+  </main>
+
+  <!-- ===================== GAME DETAIL (overlay) ===================== -->
+  <div class="overlay hidden" id="gameOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeGameOverlay">✕</button>
+        <span id="gameOverlayTitle">O'yin</span>
+      </div>
+      <img id="gameOverlayImg" class="game-banner" src="" alt="">
+      <div class="packages-grid" id="packagesGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===================== REVIEW OVERLAY ===================== -->
+  <div class="overlay hidden" id="reviewOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeReviewOverlay">✕</button>
+        <span>Fikr qoldirish</span>
+      </div>
+      <textarea id="reviewText" placeholder="Fikringizni yozing..." rows="4"></textarea>
+      <button class="btn-primary full" id="submitReviewBtn">Yuborish</button>
+    </div>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <div class="toast hidden" id="toast"></div>
+
+  <!-- ===================== BOTTOM NAV ===================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home"><span class="nav-ic">🏠</span><span>Asosiy</span></button>
+    <button class="nav-btn" data-view="top"><span class="nav-ic">🏆</span><span>Top donater</span></button>
+    <button class="nav-btn" data-view="hisob"><span class="nav-ic">💳</span><span>Hisob</span></button>
+    <button class="nav-btn" data-view="orders"><span class="nav-ic">🧾</span><span>Buyurtmalar</span></button>
+    <button class="nav-btn" data-view="profile"><span class="nav-ic">👤</span><span>Profile</span></button>
+  </nav>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
