@@ -1,0 +1,245 @@
+:root{
+  --bg:#0b0b10;
+  --card:#15151d;
+  --card-2:#1c1c26;
+  --text:#f4f4f7;
+  --text-dim:#9a9aa8;
+  --accent:#8b5cf6;
+  --accent-2:#7c3aed;
+  --gray-btn:#23232f;
+  --gray-btn-text:#c7c7d1;
+  --green:#22c55e;
+  --red:#ef4444;
+  --radius:18px;
+  --radius-sm:12px;
+}
+body.light{
+  --bg:#f4f4f8;
+  --card:#ffffff;
+  --card-2:#f0eefc;
+  --text:#141420;
+  --text-dim:#6b6b78;
+  --gray-btn:#eceef4;
+  --gray-btn-text:#43434f;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;border:none;cursor:pointer;}
+a{text-decoration:none;color:inherit;}
+
+#app{padding-bottom:88px;min-height:100vh;}
+
+/* ---------- topbar ---------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 6px;
+}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--card-2);}
+.hello-line{font-size:13px;color:var(--text-dim);}
+.hello-name{font-size:16px;font-weight:700;font-style:italic;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.pill-btn{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  padding:8px 14px;border-radius:20px;font-weight:700;font-size:13px;
+}
+.icon-btn{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  width:36px;height:36px;border-radius:50%;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ---------- views ---------- */
+.view{padding:14px 16px 6px;}
+.hidden{display:none !important;}
+.page-title{font-size:22px;font-weight:800;margin:6px 0 16px;}
+.sub-title{font-size:14px;color:var(--text-dim);margin:14px 0 8px;font-weight:600;}
+
+/* ---------- balance card ---------- */
+.balance-card{
+  background:linear-gradient(135deg,var(--card),var(--card-2));
+  border-radius:var(--radius);
+  padding:18px;margin:10px 0 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  border:1px solid rgba(139,92,246,.18);
+}
+.balance-card.small{margin-top:0;}
+.balance-label{font-size:12px;letter-spacing:.06em;color:var(--text-dim);font-weight:700;}
+.balance-amount{font-size:26px;font-weight:800;margin-top:4px;}
+.balance-amount .sum{font-size:14px;font-weight:600;color:var(--text-dim);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-weight:700;font-size:14px;
+  padding:12px 18px;border-radius:14px;
+  box-shadow:0 6px 18px rgba(139,92,246,.35);
+}
+.btn-primary.full{width:100%;margin-top:8px;}
+
+.btn-secondary{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  font-weight:700;font-size:14px;padding:12px 16px;border-radius:14px;
+}
+.btn-secondary.full{width:100%;margin-top:10px;}
+
+.btn-confirm{
+  background:var(--green);color:#fff;font-weight:800;font-size:15px;
+  padding:14px;border-radius:14px;margin-top:16px;
+}
+.btn-confirm.full{width:100%;}
+
+/* ---------- quick actions ---------- */
+.quick-actions{display:flex;gap:10px;margin-bottom:14px;}
+.quick-btn{
+  flex:1;background:var(--gray-btn);color:var(--gray-btn-text);
+  text-align:center;padding:14px;border-radius:14px;font-weight:700;font-size:14px;
+}
+
+/* ---------- banners ---------- */
+.banner-wrap{margin:6px 0 18px;}
+.banner-track{
+  width:100%;aspect-ratio:16/8.2;border-radius:var(--radius);overflow:hidden;
+  background:var(--card-2);position:relative;
+}
+.banner-track img{
+  width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;
+  opacity:0;transition:opacity .5s ease;
+}
+.banner-track img.active{opacity:1;}
+.banner-dots{display:flex;justify-content:center;gap:6px;margin-top:8px;}
+.banner-dots span{width:6px;height:6px;border-radius:50%;background:var(--gray-btn);}
+.banner-dots span.active{background:var(--accent);width:16px;border-radius:4px;}
+
+/* ---------- section head ---------- */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 10px;}
+.section-head h2{font-size:17px;margin:0;}
+.link-btn{background:none;color:var(--accent);font-weight:700;font-size:13px;}
+
+/* ---------- games grid ---------- */
+.games-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;
+}
+.game-item{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.game-thumb{
+  width:100%;aspect-ratio:1;border-radius:16px;object-fit:cover;
+  background:var(--card-2);border:1px solid rgba(255,255,255,.05);
+}
+.game-name{font-size:11px;text-align:center;color:var(--text-dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;}
+
+/* ---------- reviews ---------- */
+.reviews-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px;}
+.review-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;}
+.review-name{font-weight:700;font-size:13px;margin-bottom:4px;}
+.review-text{font-size:13px;color:var(--text-dim);}
+.review-stars{color:#facc15;font-size:12px;margin-top:4px;}
+.empty-note{color:var(--text-dim);font-size:13px;padding:8px 2px;}
+
+/* ---------- leaderboard ---------- */
+.leaderboard{display:flex;flex-direction:column;gap:10px;}
+.lb-item{
+  background:var(--card);border-radius:var(--radius-sm);
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+}
+.lb-rank{width:28px;text-align:center;font-weight:800;color:var(--text-dim);font-size:14px;}
+.lb-rank.medal{font-size:20px;}
+.lb-avatar{width:40px;height:40px;border-radius:50%;background:var(--card-2);object-fit:cover;}
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-meta{font-size:12px;color:var(--text-dim);}
+.lb-amount{color:var(--accent);font-weight:800;font-size:13px;white-space:nowrap;}
+
+/* ---------- topup ---------- */
+.methods-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.method-card{
+  background:var(--gray-btn);color:var(--text);border-radius:14px;
+  padding:20px 10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.hint{font-size:12px;color:var(--text-dim);}
+.amount-input{
+  width:100%;background:var(--card);color:var(--text);border:1px solid var(--gray-btn);
+  border-radius:14px;padding:16px;font-size:22px;font-weight:800;margin-bottom:10px;
+}
+.amount-presets{display:flex;gap:8px;margin-bottom:16px;}
+.chip{flex:1;background:var(--gray-btn);color:var(--gray-btn-text);padding:10px;border-radius:12px;font-weight:700;}
+
+.timer-wrap{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);margin:10px 0 6px;}
+#payTimer{color:var(--accent);font-weight:800;}
+.progress-bar{height:4px;background:var(--gray-btn);border-radius:4px;overflow:hidden;margin-bottom:16px;}
+.progress-fill{height:100%;background:var(--accent);width:100%;transition:width 1s linear;}
+
+.card-box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.card-label{font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+.card-number{font-size:22px;font-weight:800;letter-spacing:.02em;margin-bottom:10px;}
+.card-holder-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--text-dim);}
+.badge{background:var(--green);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;}
+
+.rules-box{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:6px;}
+.rule{font-size:13px;padding:5px 0;}
+.rule.bad{color:var(--red);}
+
+/* ---------- orders ---------- */
+.orders-list{display:flex;flex-direction:column;gap:10px;}
+.order-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
+.order-game{font-weight:700;font-size:14px;}
+.order-meta{font-size:12px;color:var(--text-dim);margin-top:2px;}
+.order-price{font-weight:800;color:var(--accent);font-size:14px;}
+
+/* ---------- profile ---------- */
+.profile-hero{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
+.avatar-big{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--card-2);margin-bottom:10px;}
+.profile-name{font-weight:800;font-size:18px;}
+.profile-id{font-size:12px;color:var(--text-dim);}
+.row-card{
+  width:100%;background:var(--card);border-radius:var(--radius-sm);
+  padding:16px;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;font-size:14px;font-weight:600;
+}
+.chevron{color:var(--text-dim);}
+
+/* ---------- overlays / bottom sheets ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:flex-end;z-index:50;
+}
+.sheet{
+  background:var(--bg);width:100%;border-radius:22px 22px 0 0;
+  padding:14px 16px 26px;max-height:85vh;overflow-y:auto;
+}
+.sheet-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-weight:700;font-size:15px;}
+.game-banner{width:100%;border-radius:14px;margin-bottom:14px;aspect-ratio:16/9;object-fit:cover;background:var(--card-2);}
+.packages-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.package-card{background:var(--card);border-radius:14px;padding:14px;text-align:left;}
+.package-card .p-label{font-weight:700;font-size:14px;margin-bottom:4px;}
+.package-card .p-price{color:var(--accent);font-weight:800;font-size:13px;}
+#reviewText{
+  width:100%;background:var(--card);color:var(--text);border:1px solid var(--gray-btn);
+  border-radius:14px;padding:12px;font-size:14px;margin-bottom:12px;resize:none;
+}
+
+/* ---------- bottom nav ---------- */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--card);border-top:1px solid rgba(255,255,255,.04);
+  display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index:40;
+}
+.nav-btn{
+  flex:1;background:none;color:var(--text-dim);display:flex;flex-direction:column;
+  align-items:center;gap:3px;font-size:10px;font-weight:600;padding:6px 2px;border-radius:12px;
+}
+.nav-ic{font-size:19px;}
+.nav-btn.active{color:var(--accent);background:rgba(139,92,246,.12);}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:var(--card-2);color:var(--text);padding:10px 18px;border-radius:12px;
+  font-size:13px;font-weight:600;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
