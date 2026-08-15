@@ -34,14 +34,17 @@ log = logging.getLogger("app")
 # ============================================================================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "")
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").replace(" ", "").split(",") if x]
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.onrender.com")
 CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/your_channel")
-SUPPORT_URL = os.getenv("SUPPORT_URL", "https://t.me/your_support")
+SUPPORT_URL = os.getenv("SUPPORT_URL", "https://t.me/x7fan")
 CARD_NUMBER = os.getenv("CARD_NUMBER", "5614 6851 0539 9864")
 CARD_HOLDER = os.getenv("CARD_HOLDER", "Card Holder")
 CARD_BANK = os.getenv("CARD_BANK", "UZCARD")
 START_IMAGE = os.getenv("START_IMAGE", "")
+APP_VERSION = os.getenv("APP_VERSION", "1.01")
+APP_OWNER = os.getenv("APP_OWNER", "@x7fan")
 DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "data.db"))
 PORT = int(os.getenv("PORT", "10000"))
 INDEX_HTML_PATH = os.path.join(os.path.dirname(__file__), "index.html")
@@ -77,6 +80,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL, image_url TEXT,
             packages TEXT NOT NULL DEFAULT '[]',
+            rating REAL NOT NULL DEFAULT 5.0,
             active INTEGER NOT NULL DEFAULT 1,
             sort_order INTEGER NOT NULL DEFAULT 0
         );
@@ -100,18 +104,11 @@ def init_db():
             user_id INTEGER NOT NULL, text TEXT NOT NULL,
             rating INTEGER NOT NULL DEFAULT 5, created_at TEXT
         );
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY, value TEXT
+        );
     """)
     conn.commit()
-    c.execute("SELECT COUNT(*) n FROM games")
-    if c.fetchone()["n"] == 0:
-        for name in ["PUBG Mobile", "Free Fire", "Mobile Legends", "Honor of Kings", "Standoff 2"]:
-            pkgs = json.dumps([
-                {"label": "60 UC", "price": 11700},
-                {"label": "325 UC", "price": 59000},
-                {"label": "660 UC", "price": 115000},
-            ])
-            c.execute("INSERT INTO games (name, image_url, packages) VALUES (?,?,?)", (name, "", pkgs))
-        conn.commit()
     conn.close()
 
 
@@ -174,11 +171,43 @@ def get_game(game_id):
     return g
 
 
-def add_game(name, image_url, packages):
+def add_game(name, image_url, packages, rating=5.0):
     conn = get_conn(); c = conn.cursor()
-    c.execute("INSERT INTO games (name, image_url, packages, sort_order) VALUES (?,?,?,999)",
-               (name, image_url, json.dumps(packages)))
+    c.execute("INSERT INTO games (name, image_url, packages, rating, sort_order) VALUES (?,?,?,?,999)",
+               (name, image_url, json.dumps(packages), rating))
     conn.commit(); gid = c.lastrowid; conn.close(); return gid
+
+
+def delete_game(game_id):
+    conn = get_conn()
+    conn.execute("UPDATE games SET active=0 WHERE id=?", (game_id,))
+    conn.commit(); conn.close()
+
+
+def list_games_all():
+    conn = get_conn(); c = conn.cursor()
+    c.execute("SELECT * FROM games WHERE active=1 ORDER BY sort_order, id")
+    rows = [dict(r) for r in c.fetchall()]; conn.close()
+    return rows
+
+
+def clear_all_reviews():
+    conn = get_conn()
+    conn.execute("DELETE FROM reviews")
+    conn.commit(); conn.close()
+
+
+def get_setting(key, default=None):
+    conn = get_conn(); c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key=?", (key,))
+    row = c.fetchone(); conn.close()
+    return row["value"] if row else default
+
+
+def set_setting(key, value):
+    conn = get_conn()
+    conn.execute("INSERT INTO settings (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, value))
+    conn.commit(); conn.close()
 
 
 def create_order(user_tg_id, game_id, game_name, package_label, price):
@@ -396,6 +425,7 @@ def api_init():
         "balance": user["balance"], "lang": user["lang"], "theme": user["theme"],
         "is_admin": user["tg_id"] in ADMIN_IDS,
         "channel_url": CHANNEL_URL, "support_url": SUPPORT_URL,
+        "bot_username": BOT_USERNAME, "app_version": APP_VERSION, "app_owner": APP_OWNER,
     })
 
 
@@ -440,6 +470,11 @@ def api_order():
     if nb is False:
         return jsonify({"error": "insufficient_balance"}), 400
     oid = create_order(user["tg_id"], game["id"], game["name"], package["label"], package["price"])
+    tg_send_message(
+        user["tg_id"],
+        (f"✅ Buyurtmangiz bajarildi!\n🎮 {game['name']} — {package['label']}\n"
+         f"💰 {package['price']:,} so'm\n\nIltimos, ilovada xizmatimizga fikr (izoh va yulduz) qoldiring ⭐").replace(",", " "),
+    )
     return jsonify({"ok": True, "order_id": oid, "balance": nb})
 
 
@@ -498,6 +533,21 @@ def api_topup_request():
     return jsonify({"ok": True, "topup_id": tid})
 
 
+def require_admin():
+    auth = authenticate()
+    if not auth or auth[0] not in ADMIN_IDS:
+        return None, (jsonify({"error": "forbidden"}), 403)
+    return auth[0], None
+
+
+@flask_app.route("/api/admin/clear-reviews", methods=["POST"])
+def api_admin_clear_reviews():
+    admin_id, err = require_admin()
+    if err: return err
+    clear_all_reviews()
+    return jsonify({"ok": True})
+
+
 def run_flask():
     flask_app.run(host="0.0.0.0", port=PORT, threaded=True, use_reloader=False)
 
@@ -508,9 +558,11 @@ def run_flask():
 
 class AdminStates(StatesGroup):
     waiting_banner_photo = State()
+    waiting_start_image = State()
     waiting_new_game_name = State()
     waiting_new_game_image = State()
     waiting_new_game_package = State()
+    waiting_new_game_rating = State()
     waiting_balance_target = State()
     waiting_balance_amount = State()
 
@@ -532,8 +584,11 @@ def admin_menu_kb():
         [InlineKeyboardButton(text="📊 Statistika", callback_data="adm_stats")],
         [InlineKeyboardButton(text="🧾 Jami buyurtmalar", callback_data="adm_orders")],
         [InlineKeyboardButton(text="🖼 Reklama banner yangilash", callback_data="adm_banner")],
+        [InlineKeyboardButton(text="🖼 Start rasmni yangilash", callback_data="adm_startimg")],
         [InlineKeyboardButton(text="🎮 Yangi o'yin qo'shish", callback_data="adm_newgame")],
-        [InlineKeyboardButton(text="💸 Pul tashlash", callback_data="adm_addbalance")],
+        [InlineKeyboardButton(text="🗑 O'yinlarni boshqarish", callback_data="adm_managegames")],
+        [InlineKeyboardButton(text="🧹 Izohlarni tozalash", callback_data="adm_clearreviews")],
+        [InlineKeyboardButton(text="💸 Pul tashlash (+/-)", callback_data="adm_addbalance")],
     ])
 
 
@@ -551,9 +606,10 @@ async def cmd_start(message: Message, command: CommandObject = None):
             "Bu yerda siz sevimli o'yinlaringiz uchun UC, Prime va boshqa xizmatlarni "
             "eng tez va eng arzon narxlarda sotib olishingiz mumkin.\n\n"
             "Boshlash uchun pastdagi tugmalardan foydalaning 👇")
-    if START_IMAGE:
+    image = get_setting("start_image") or START_IMAGE
+    if image:
         try:
-            await message.answer_photo(START_IMAGE, caption=text, reply_markup=start_kb())
+            await message.answer_photo(image, caption=text, reply_markup=start_kb())
             return
         except Exception:
             pass
@@ -620,6 +676,22 @@ async def adm_banner_done(message: Message, state: FSMContext):
     await message.answer("✅ Bannerlar yangilandi.", reply_markup=admin_menu_kb())
 
 
+@router.callback_query(F.data == "adm_startimg")
+async def adm_startimg_start(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    await state.set_state(AdminStates.waiting_start_image)
+    await call.message.edit_text("🖼 /start xabari uchun yangi rasm yuboring:", reply_markup=cancel_kb())
+    await call.answer()
+
+
+@router.message(AdminStates.waiting_start_image, F.photo)
+async def adm_startimg_photo(message: Message, state: FSMContext):
+    set_setting("start_image", message.photo[-1].file_id)
+    await state.clear()
+    await message.answer("✅ Start rasmi yangilandi.", reply_markup=admin_menu_kb())
+
+
 @router.callback_query(F.data == "adm_newgame")
 async def adm_newgame_start(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
@@ -660,9 +732,56 @@ async def adm_newgame_packages(message: Message, state: FSMContext):
     if not packages:
         await message.answer("❌ Format noto'g'ri. Masalan: 60 UC-11700")
         return
-    add_game(data["name"], data["image"], packages)
+    await state.update_data(packages=packages)
+    await state.set_state(AdminStates.waiting_new_game_rating)
+    await message.answer("⭐ Bu o'yin nechi yulduzli bo'lsin? (1 dan 5 gacha, masalan: 5)", reply_markup=cancel_kb())
+
+
+@router.message(AdminStates.waiting_new_game_rating, F.text)
+async def adm_newgame_rating(message: Message, state: FSMContext):
+    try:
+        rating = float(message.text.strip().replace(",", "."))
+        rating = max(1.0, min(5.0, rating))
+    except ValueError:
+        rating = 5.0
+    data = await state.get_data()
+    add_game(data["name"], data["image"], data["packages"], rating)
     await state.clear()
-    await message.answer(f"✅ \"{data['name']}\" qo'shildi ({len(packages)} ta paket).", reply_markup=admin_menu_kb())
+    await message.answer(f"✅ \"{data['name']}\" qo'shildi ({len(data['packages'])} ta paket, ⭐{rating}).", reply_markup=admin_menu_kb())
+
+
+@router.callback_query(F.data == "adm_managegames")
+async def adm_managegames(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    games = list_games_all()
+    if not games:
+        await call.message.edit_text("🗑 Hozircha o'yinlar yo'q.", reply_markup=admin_menu_kb())
+        await call.answer()
+        return
+    rows = [[InlineKeyboardButton(text=f"❌ {g['name']}", callback_data=f"adm_delgame_{g['id']}")] for g in games]
+    rows.append([InlineKeyboardButton(text="⬅ Orqaga", callback_data="adm_cancel")])
+    await call.message.edit_text("🗑 O'chirish uchun o'yinni tanlang:", reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
+    await call.answer()
+
+
+@router.callback_query(F.data.startswith("adm_delgame_"))
+async def adm_delgame(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    gid = int(call.data.split("_")[-1])
+    delete_game(gid)
+    await call.answer("O'chirildi ✅")
+    await adm_managegames(call)
+
+
+@router.callback_query(F.data == "adm_clearreviews")
+async def adm_clearreviews(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    clear_all_reviews()
+    await call.message.edit_text("🧹 Barcha izohlar tozalandi.", reply_markup=admin_menu_kb())
+    await call.answer()
 
 
 @router.callback_query(F.data == "adm_addbalance")
@@ -688,25 +807,39 @@ async def adm_addbalance_target(message: Message, state: FSMContext):
         return
     await state.update_data(target_tg_id=user["tg_id"], target_name=user.get("full_name") or user["tg_id"])
     await state.set_state(AdminStates.waiting_balance_amount)
-    await message.answer(f"💰 {user.get('full_name') or user['tg_id']} uchun nechi pul tashlaysiz?")
+    await message.answer(
+        f"💰 {user.get('full_name') or user['tg_id']} uchun summani kiriting.\n"
+        f"Qo'shish uchun: <code>5000</code>\nKamaytirish uchun: <code>-5000</code>",
+        parse_mode="HTML",
+    )
 
 
 @router.message(AdminStates.waiting_balance_amount, F.text)
 async def adm_addbalance_amount(message: Message, state: FSMContext, bot: Bot):
-    amount_text = "".join(ch for ch in message.text if ch.isdigit())
+    raw = message.text.strip().replace(" ", "")
+    negative = raw.startswith("-")
+    amount_text = "".join(ch for ch in raw if ch.isdigit())
     if not amount_text:
-        await message.answer("❌ Iltimos faqat raqam kiriting.")
+        await message.answer("❌ Iltimos faqat raqam kiriting (masalan 5000 yoki -5000).")
         return
-    amount = int(amount_text)
+    amount = int(amount_text) * (-1 if negative else 1)
     data = await state.get_data()
     nb = change_balance(data["target_tg_id"], amount)
     await state.clear()
-    if nb is False or nb is None:
+    if nb is False:
+        await message.answer("❌ Balans yetarli emas, manfiy qiymat balansdan katta bo'lishi mumkin emas.", reply_markup=admin_menu_kb())
+        return
+    if nb is None:
         await message.answer("❌ Xatolik yuz berdi."); return
-    await message.answer(f"✅ {data['target_name']} balansiga {amount:,} so'm qo'shildi. Yangi balans: {nb:,}".replace(",", " "),
+    sign = "+" if amount >= 0 else ""
+    await message.answer(f"✅ {data['target_name']} balansi {sign}{amount:,} so'm o'zgardi. Yangi balans: {nb:,}".replace(",", " "),
                           reply_markup=admin_menu_kb())
     try:
-        await bot.send_message(data["target_tg_id"], f"💰 Balansingizga admin {amount:,} so'm tashlab berdi!\nYangi balans: {nb:,} so'm".replace(",", " "))
+        if amount >= 0:
+            note = f"💰 Balansingizga admin {amount:,} so'm tashlab berdi!\nYangi balans: {nb:,} so'm".replace(",", " ")
+        else:
+            note = f"⚠️ Balansingizdan {abs(amount):,} so'm ayirildi.\nYangi balans: {nb:,} so'm".replace(",", " ")
+        await bot.send_message(data["target_tg_id"], note)
     except Exception:
         pass
 
