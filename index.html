@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yopish</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0b0b10;
+  --card:#15151d;
+  --card-2:#1c1c26;
+  --text:#f4f4f7;
+  --text-dim:#9a9aa8;
+  --accent:#8b5cf6;
+  --accent-2:#7c3aed;
+  --gray-btn:#23232f;
+  --gray-btn-text:#c7c7d1;
+  --green:#22c55e;
+  --red:#ef4444;
+  --radius:18px;
+  --radius-sm:12px;
+}
+body.light{
+  --bg:#f4f4f8;
+  --card:#ffffff;
+  --card-2:#f0eefc;
+  --text:#141420;
+  --text-dim:#6b6b78;
+  --gray-btn:#eceef4;
+  --gray-btn-text:#43434f;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;border:none;cursor:pointer;}
+a{text-decoration:none;color:inherit;}
+
+#app{padding-bottom:88px;min-height:100vh;}
+
+/* ---------- topbar ---------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 6px;
+}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--card-2);}
+.hello-line{font-size:13px;color:var(--text-dim);}
+.hello-name{font-size:16px;font-weight:700;font-style:italic;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.pill-btn{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  padding:8px 14px;border-radius:20px;font-weight:700;font-size:13px;
+}
+.icon-btn{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  width:36px;height:36px;border-radius:50%;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ---------- views ---------- */
+.view{padding:14px 16px 6px;}
+.hidden{display:none !important;}
+.page-title{font-size:22px;font-weight:800;margin:6px 0 16px;}
+.sub-title{font-size:14px;color:var(--text-dim);margin:14px 0 8px;font-weight:600;}
+
+/* ---------- balance card ---------- */
+.balance-card{
+  background:linear-gradient(135deg,var(--card),var(--card-2));
+  border-radius:var(--radius);
+  padding:18px;margin:10px 0 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  border:1px solid rgba(139,92,246,.18);
+}
+.balance-card.small{margin-top:0;}
+.balance-label{font-size:12px;letter-spacing:.06em;color:var(--text-dim);font-weight:700;}
+.balance-amount{font-size:26px;font-weight:800;margin-top:4px;}
+.balance-amount .sum{font-size:14px;font-weight:600;color:var(--text-dim);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-weight:700;font-size:14px;
+  padding:12px 18px;border-radius:14px;
+  box-shadow:0 6px 18px rgba(139,92,246,.35);
+}
+.btn-primary.full{width:100%;margin-top:8px;}
+
+.btn-secondary{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  font-weight:700;font-size:14px;padding:12px 16px;border-radius:14px;
+}
+.btn-secondary.full{width:100%;margin-top:10px;}
+
+.btn-confirm{
+  background:var(--green);color:#fff;font-weight:800;font-size:15px;
+  padding:14px;border-radius:14px;margin-top:16px;
+}
+.btn-confirm.full{width:100%;}
+
+/* ---------- quick actions ---------- */
+.quick-actions{display:flex;gap:10px;margin-bottom:14px;}
+.quick-btn{
+  flex:1;background:var(--gray-btn);color:var(--gray-btn-text);
+  text-align:center;padding:14px;border-radius:14px;font-weight:700;font-size:14px;
+}
+
+/* ---------- banners ---------- */
+.banner-wrap{margin:6px 0 18px;}
+.banner-track{
+  width:100%;aspect-ratio:16/8.2;border-radius:var(--radius);overflow:hidden;
+  background:var(--card-2);position:relative;
+}
+.banner-track img{
+  width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;
+  opacity:0;transition:opacity .5s ease;
+}
+.banner-track img.active{opacity:1;}
+.banner-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(135deg,#4c1d95,#1e1033 60%,#0b0b10);
+  color:#fff;text-align:center;padding:0 16px;
+}
+.banner-placeholder-icon{font-size:30px;}
+.banner-placeholder-title{font-weight:900;font-size:20px;letter-spacing:.03em;
+  background:linear-gradient(90deg,#c4b5fd,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.banner-placeholder-sub{font-size:12px;color:#c7c7d1;font-weight:600;}
+.banner-dots{display:flex;justify-content:center;gap:6px;margin-top:8px;}
+.banner-dots span{width:6px;height:6px;border-radius:50%;background:var(--gray-btn);}
+.banner-dots span.active{background:var(--accent);width:16px;border-radius:4px;}
+
+/* ---------- section head ---------- */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 10px;}
+.section-head h2{font-size:17px;margin:0;}
+.link-btn{background:none;color:var(--accent);font-weight:700;font-size:13px;}
+
+/* ---------- games grid ---------- */
+.games-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;
+}
+.game-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+.game-thumb-wrap{
+  position:relative;width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+  transition:transform .15s ease;
+}
+.game-item:active .game-thumb-wrap{transform:scale(.94);}
+.game-thumb{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+.game-thumb-fallback{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:30px;
+}
+.rating-badge{
+  position:absolute;bottom:4px;left:4px;right:4px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(2px);
+  color:#facc15;font-size:9px;font-weight:800;text-align:center;
+  border-radius:6px;padding:2px 0;letter-spacing:.02em;
+}
+.game-name{font-size:11px;text-align:center;color:var(--text-dim);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;}
+
+/* ---------- reviews ---------- */
+.reviews-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px;}
+.review-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;}
+.review-name{font-weight:700;font-size:13px;margin-bottom:4px;}
+.review-text{font-size:13px;color:var(--text-dim);}
+.review-stars{color:#facc15;font-size:12px;margin-top:4px;}
+.empty-note{color:var(--text-dim);font-size:13px;padding:8px 2px;}
+
+/* ---------- leaderboard ---------- */
+.leaderboard{display:flex;flex-direction:column;gap:10px;}
+.lb-item{
+  background:var(--card);border-radius:var(--radius-sm);
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+}
+.lb-rank{width:28px;text-align:center;font-weight:800;color:var(--text-dim);font-size:14px;}
+.lb-rank.medal{font-size:20px;}
+.lb-avatar{width:40px;height:40px;border-radius:50%;background:var(--card-2);object-fit:cover;}
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-meta{font-size:12px;color:var(--text-dim);}
+.lb-amount{color:var(--accent);font-weight:800;font-size:13px;white-space:nowrap;}
+
+/* ---------- topup ---------- */
+.methods-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.method-card{
+  background:var(--gray-btn);color:var(--text);border-radius:14px;
+  padding:20px 10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.hint{font-size:12px;color:var(--text-dim);}
+.amount-input{
+  width:100%;background:var(--card);color:var(--text);border:1px solid var(--gray-btn);
+  border-radius:14px;padding:16px;font-size:22px;font-weight:800;margin-bottom:10px;
+}
+.amount-presets{display:flex;gap:8px;margin-bottom:16px;}
+.chip{flex:1;background:var(--gray-btn);color:var(--gray-btn-text);padding:10px;border-radius:12px;font-weight:700;}
+
+.timer-wrap{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);margin:10px 0 6px;}
+#payTimer{color:var(--accent);font-weight:800;}
+.progress-bar{height:4px;background:var(--gray-btn);border-radius:4px;overflow:hidden;margin-bottom:16px;}
+.progress-fill{height:100%;background:var(--accent);width:100%;transition:width 1s linear;}
+
+.card-box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.card-label{font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+.card-number{font-size:22px;font-weight:800;letter-spacing:.02em;margin-bottom:10px;}
+.card-holder-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--text-dim);}
+.badge{background:var(--green);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;}
+
+.rules-box{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:6px;}
+.rule{font-size:13px;padding:5px 0;}
+.rule.bad{color:var(--red);}
+
+/* ---------- orders ---------- */
+.orders-list{display:flex;flex-direction:column;gap:10px;}
+.order-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
+.order-game{font-weight:700;font-size:14px;}
+.order-meta{font-size:12px;color:var(--text-dim);margin-top:2px;}
+.order-price{font-weight:800;color:var(--accent);font-size:14px;}
+
+/* ---------- profile ---------- */
+.profile-hero{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
+.avatar-big{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--card-2);margin-bottom:10px;}
+.profile-name{font-weight:800;font-size:18px;}
+.profile-id{font-size:12px;color:var(--text-dim);}
+.row-card{
+  width:100%;background:var(--card);border-radius:var(--radius-sm);
+  padding:16px;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;font-size:14px;font-weight:600;
+}
+.chevron{color:var(--text-dim);}
+
+/* ---------- overlays / bottom sheets ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:flex-end;z-index:50;
+}
+.sheet{
+  background:var(--bg);width:100%;border-radius:22px 22px 0 0;
+  padding:14px 16px 26px;max-height:85vh;overflow-y:auto;
+}
+.sheet-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-weight:700;font-size:15px;}
+.game-banner-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.game-banner{width:100%;height:100%;object-fit:cover;background:var(--card-2);}
+.game-banner-fallback{display:flex;align-items:center;justify-content:center;font-size:48px;position:absolute;inset:0;}
+.packages-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.package-card{
+  background:var(--card);border-radius:16px;padding:16px 14px;text-align:left;
+  border:1px solid rgba(139,92,246,.14);transition:transform .12s ease,border-color .12s ease;
+}
+.package-card:active{transform:scale(.96);border-color:var(--accent);}
+.package-card .p-icon{font-size:18px;margin-bottom:6px;}
+.package-card .p-label{font-weight:800;font-size:14px;margin-bottom:4px;}
+.package-card .p-price{color:var(--accent);font-weight:800;font-size:13px;}
+#reviewText{
+  width:100%;background:var(--card);color:var(--text);border:1px solid var(--gray-btn);
+  border-radius:14px;padding:12px;font-size:14px;margin-bottom:12px;resize:none;
+}
+
+/* ---------- bottom nav ---------- */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--card);border-top:1px solid rgba(255,255,255,.04);
+  display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index:40;
+}
+.nav-btn{
+  flex:1;background:none;color:var(--text-dim);display:flex;flex-direction:column;
+  align-items:center;gap:3px;font-size:10px;font-weight:600;padding:6px 2px;border-radius:12px;
+}
+.nav-ic{font-size:19px;}
+.nav-btn.active{color:var(--accent);background:rgba(139,92,246,.12);}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:var(--card-2);color:var(--text);padding:10px 18px;border-radius:12px;
+  font-size:13px;font-weight:600;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="topbar">
+    <div class="topbar-left" id="openProfile">
+      <img id="avatar" class="avatar" src="" alt="">
+      <div class="hello">
+        <div class="hello-line">Salom 👋</div>
+        <div class="hello-name" id="userName">...</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="pill-btn" id="langBtn">UZ</button>
+      <button class="icon-btn" id="themeBtn">🌙</button>
+    </div>
+  </header>
+
+  <!-- ===================== HOME VIEW ===================== -->
+  <main class="view" id="view-home">
+
+    <section class="balance-card">
+      <div class="balance-info">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <button class="btn-primary" id="topupBtnHome">➕ To'ldirish</button>
+    </section>
+
+    <section class="quick-actions">
+      <a class="quick-btn" id="channelBtn" href="#">📢 Kanal</a>
+      <a class="quick-btn" id="supportBtn" href="#">🆘 Yordam</a>
+    </section>
+
+    <section class="banner-wrap">
+      <div class="banner-track" id="bannerTrack"></div>
+      <div class="banner-dots" id="bannerDots"></div>
+    </section>
+
+    <section class="section-head">
+      <h2>🎮 Oyinlar mashhur</h2>
+      <button class="link-btn" id="seeAllGames">Barchasi</button>
+    </section>
+    <div class="games-grid" id="gamesGrid"></div>
+
+    <section class="section-head">
+      <h2>💬 Odamlar fikri</h2>
+    </section>
+    <div class="reviews-list" id="reviewsList"></div>
+    <button class="btn-secondary full" id="leaveReviewBtn">✍️ Fikr qoldirish</button>
+
+  </main>
+
+  <!-- ===================== TOP VIEW ===================== -->
+  <main class="view hidden" id="view-top">
+    <h1 class="page-title">🏆 TOP Xaridorlar</h1>
+    <div class="leaderboard" id="leaderboardList"></div>
+  </main>
+
+  <!-- ===================== HISOB (TOPUP) VIEW ===================== -->
+  <main class="view hidden" id="view-hisob">
+
+    <div id="hisob-step-methods">
+      <h1 class="page-title">💳 Balansni to'ldirish</h1>
+      <div class="balance-card small">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue2">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <h3 class="sub-title">To'lov usuli</h3>
+      <div class="methods-grid">
+        <button class="method-card" data-method="UZCARD">💳 <span>UZCARD</span></button>
+        <button class="method-card" data-method="HUMO">💳 <span>HUMO</span></button>
+      </div>
+      <p class="hint">Eng kam summa: 1 000 so'm</p>
+    </div>
+
+    <div id="hisob-step-amount" class="hidden">
+      <h1 class="page-title"><span id="chosenMethod">UZCARD</span></h1>
+      <h3 class="sub-title">Summani kiriting</h3>
+      <input type="tel" inputmode="numeric" id="amountInput" class="amount-input" placeholder="0">
+      <div class="amount-presets">
+        <button class="chip" data-amt="50000">50k</button>
+        <button class="chip" data-amt="100000">100k</button>
+        <button class="chip" data-amt="200000">200k</button>
+        <button class="chip" data-amt="500000">500k</button>
+      </div>
+      <button class="btn-primary full" id="goToPayment">Davom etish</button>
+      <button class="btn-secondary full" id="backToMethods">⬅ Orqaga</button>
+    </div>
+
+    <div id="hisob-step-pay" class="hidden">
+      <h1 class="page-title">To'lov</h1>
+      <p class="sub-title">Aynan <b id="payAmount">0</b> so'm o'tkazing</p>
+      <div class="timer-wrap">
+        <span>⏱ Karta amal qiladi</span>
+        <span id="payTimer">3:00</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+      <div class="card-box">
+        <div class="card-label">Karta raqami</div>
+        <div class="card-number" id="cardNumber">-</div>
+        <div class="card-holder-row">
+          <span class="badge" id="cardBank">UZCARD</span>
+          <span id="cardHolder"></span>
+        </div>
+        <button class="btn-secondary full" id="copyCardBtn">📋 Nusxa olish</button>
+      </div>
+
+      <div class="rules-box">
+        <div class="rule ok">✅ Summani 1 so'mga ham o'zgartirmang</div>
+        <div class="rule ok">✅ Belgilangan vaqtda to'lang</div>
+        <div class="rule bad">❌ Boshqa summa yubormang</div>
+      </div>
+
+      <button class="btn-confirm full" id="confirmPaidBtn">✅ To'lovni amalga oshirdim</button>
+    </div>
+
+  </main>
+
+  <!-- ===================== BUYURTMALAR VIEW ===================== -->
+  <main class="view hidden" id="view-orders">
+    <h1 class="page-title">🧾 Buyurtmalarim</h1>
+    <div class="orders-list" id="ordersList"></div>
+  </main>
+
+  <!-- ===================== PROFIL VIEW ===================== -->
+  <main class="view hidden" id="view-profile">
+    <div class="profile-hero">
+      <img id="avatarBig" class="avatar-big" src="" alt="">
+      <div class="profile-name" id="profileName">...</div>
+      <div class="profile-id" id="profileId">ID: -</div>
+    </div>
+
+    <div class="balance-card small">
+      <div class="balance-info">
+        <div class="balance-label">💼 BALANS</div>
+        <div class="balance-amount"><span id="balanceValue3">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <button class="btn-primary" id="topupBtnProfile">➕ To'ldirish</button>
+    </div>
+
+    <button class="row-card" id="inviteBtn">
+      <span>🤝 Do'st taklif qiling — bonus oling</span>
+      <span class="chevron">›</span>
+    </button>
+    <button class="row-card" id="topDonatersBtn">
+      <span>🏅 Top donaterlar</span>
+      <span class="chevron">›</span>
+    </button>
+  </main>
+
+  <!-- ===================== GAME DETAIL (overlay) ===================== -->
+  <div class="overlay hidden" id="gameOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeGameOverlay">✕</button>
+        <span id="gameOverlayTitle">O'yin</span>
+      </div>
+      <div class="game-banner-wrap">
+        <img id="gameOverlayImg" class="game-banner" src="" alt="">
+        <div id="gameOverlayFallback" class="game-banner game-banner-fallback hidden"></div>
+      </div>
+      <div class="packages-grid" id="packagesGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===================== REVIEW OVERLAY ===================== -->
+  <div class="overlay hidden" id="reviewOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeReviewOverlay">✕</button>
+        <span>Fikr qoldirish</span>
+      </div>
+      <textarea id="reviewText" placeholder="Fikringizni yozing..." rows="4"></textarea>
+      <button class="btn-primary full" id="submitReviewBtn">Yuborish</button>
+    </div>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <div class="toast hidden" id="toast"></div>
+
+  <!-- ===================== BOTTOM NAV ===================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home"><span class="nav-ic">🏠</span><span>Asosiy</span></button>
+    <button class="nav-btn" data-view="top"><span class="nav-ic">🏆</span><span>Top donater</span></button>
+    <button class="nav-btn" data-view="hisob"><span class="nav-ic">💳</span><span>Hisob</span></button>
+    <button class="nav-btn" data-view="orders"><span class="nav-ic">🧾</span><span>Buyurtmalar</span></button>
+    <button class="nav-btn" data-view="profile"><span class="nav-ic">👤</span><span>Profile</span></button>
+  </nav>
+
+</div>
+
+<script>
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+
+const INIT_DATA = tg ? tg.initData : "";
+// only used for local testing outside Telegram, harmless otherwise
+const DEBUG_ID = new URLSearchParams(location.search).get("debug_id") || "";
+
+let STATE = {
+  user: null,
+  games: [],
+  currentGame: null,
+};
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (INIT_DATA) headers["X-Init-Data"] = INIT_DATA;
+  if (!INIT_DATA && DEBUG_ID) headers["X-Debug-Id"] = DEBUG_ID;
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  if (!res.ok) {
+    let e; try { e = await res.json(); } catch { e = {}; }
+    throw Object.assign(new Error(e.error || "request_failed"), { status: res.status, data: e });
+  }
+  return res.json();
+}
+
+function fmt(n) {
+  return (n || 0).toLocaleString("fr-FR").replace(/,/g, " ");
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.add("hidden"), 2200);
+}
+
+/* ============================== INIT ============================== */
+
+async function boot() {
+  try {
+    const data = await api("/api/init");
+    STATE.user = data;
+    applyUser(data);
+  } catch (e) {
+    toast("Ulanishda xatolik. Ilovani qayta oching.");
+  }
+  await Promise.all([loadGames(), loadBanners(), loadReviews()]);
+  bindEvents();
+}
+
+function applyUser(u) {
+  document.getElementById("userName").textContent = u.full_name || u.username || ("ID " + u.tg_id);
+  document.getElementById("profileName").textContent = u.full_name || u.username || ("ID " + u.tg_id);
+  document.getElementById("profileId").textContent = "ID: " + u.tg_id;
+  ["balanceValue", "balanceValue2", "balanceValue3"].forEach(id => {
+    document.getElementById(id).textContent = fmt(u.balance);
+  });
+  document.getElementById("langBtn").textContent = (u.lang || "uz").toUpperCase();
+  document.body.classList.toggle("light", u.theme === "light");
+  document.getElementById("themeBtn").textContent = u.theme === "light" ? "☀️" : "🌙";
+
+  const photo = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.photo_url : "";
+  const avatarSrc = photo || "https://api.dicebear.com/7.x/identicon/svg?seed=" + u.tg_id;
+  document.getElementById("avatar").src = avatarSrc;
+  document.getElementById("avatarBig").src = avatarSrc;
+
+  document.getElementById("channelBtn").href = u.channel_url;
+  document.getElementById("supportBtn").href = u.support_url;
+}
+
+/* ============================== NAV ============================== */
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  document.getElementById("view-" + name).classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  if (name === "top") loadLeaderboard();
+  if (name === "orders") loadOrders();
+  if (name === "hisob") resetTopupFlow();
+}
+
+/* ============================== BANNERS ============================== */
+
+let bannerIndex = 0, bannerTimer = null;
+
+async function loadBanners() {
+  const banners = await api("/api/banners");
+  const track = document.getElementById("bannerTrack");
+  const dots = document.getElementById("bannerDots");
+  track.innerHTML = "";
+  dots.innerHTML = "";
+  if (banners.length === 0) {
+    track.innerHTML = `
+      <div class="banner-placeholder">
+        <span class="banner-placeholder-icon">⚡</span>
+        <span class="banner-placeholder-title">ENG TEZ &amp; ARZON</span>
+        <span class="banner-placeholder-sub">Barcha o'yinlar uchun xizmatlar</span>
+      </div>`;
+    return;
+  }
+  banners.forEach((b, i) => {
+    const img = document.createElement("img");
+    img.src = b.image_url;
+    if (i === 0) img.classList.add("active");
+    track.appendChild(img);
+    const dot = document.createElement("span");
+    if (i === 0) dot.classList.add("active");
+    dots.appendChild(dot);
+  });
+  bannerIndex = 0;
+  clearInterval(bannerTimer);
+  if (banners.length > 1) {
+    bannerTimer = setInterval(() => {
+      const imgs = track.querySelectorAll("img");
+      const dotEls = dots.querySelectorAll("span");
+      imgs[bannerIndex].classList.remove("active");
+      dotEls[bannerIndex].classList.remove("active");
+      bannerIndex = (bannerIndex + 1) % imgs.length;
+      imgs[bannerIndex].classList.add("active");
+      dotEls[bannerIndex].classList.add("active");
+    }, 3500);
+  }
+}
+
+/* ============================== GAMES ============================== */
+
+const GAME_EMOJI = [
+  { match: /pubg/i, icon: "🎯", from: "#f97316", to: "#7c2d12" },
+  { match: /free ?fire/i, icon: "🔥", from: "#f43f5e", to: "#7f1d1d" },
+  { match: /mobile ?legends|mlbb/i, icon: "⚔️", from: "#3b82f6", to: "#1e3a8a" },
+  { match: /honor ?of ?kings/i, icon: "👑", from: "#eab308", to: "#78350f" },
+  { match: /stand ?off/i, icon: "🔫", from: "#64748b", to: "#0f172a" },
+  { match: /steam/i, icon: "🎮", from: "#0ea5e9", to: "#0c4a6e" },
+  { match: /telegram/i, icon: "✈️", from: "#38bdf8", to: "#0369a1" },
+];
+
+function gameVisual(name) {
+  const found = GAME_EMOJI.find(g => g.match.test(name));
+  if (found) return found;
+  return { icon: "🎮", from: "#8b5cf6", to: "#4c1d95" };
+}
+
+async function loadGames() {
+  const games = await api("/api/games");
+  STATE.games = games;
+  const grid = document.getElementById("gamesGrid");
+  grid.innerHTML = "";
+  games.forEach(g => grid.appendChild(renderGameTile(g)));
+}
+
+function renderGameTile(g) {
+  const el = document.createElement("div");
+  el.className = "game-item";
+  const v = gameVisual(g.name);
+  const hasImg = g.image_url && g.image_url.trim() !== "";
+  el.innerHTML = `
+    <div class="game-thumb-wrap">
+      ${hasImg ? `<img class="game-thumb" src="${g.image_url}" alt="${g.name}">` : ""}
+      <div class="game-thumb-fallback" style="background:linear-gradient(145deg,${v.from},${v.to});${hasImg ? "display:none;" : ""}">${v.icon}</div>
+      <span class="rating-badge">⭐ 5.0</span>
+    </div>
+    <div class="game-name">${g.name}</div>
+  `;
+  if (hasImg) {
+    const img = el.querySelector(".game-thumb");
+    img.addEventListener("error", () => {
+      img.style.display = "none";
+      el.querySelector(".game-thumb-fallback").style.display = "flex";
+    });
+  }
+  el.addEventListener("click", () => openGame(g.id));
+  return el;
+}
+
+function openGame(id) {
+  const g = STATE.games.find(x => x.id === id);
+  if (!g) return;
+  STATE.currentGame = g;
+  document.getElementById("gameOverlayTitle").textContent = g.name;
+  const bannerImg = document.getElementById("gameOverlayImg");
+  const bannerFallback = document.getElementById("gameOverlayFallback");
+  const v = gameVisual(g.name);
+  const showFallback = () => {
+    bannerImg.classList.add("hidden");
+    bannerFallback.classList.remove("hidden");
+    bannerFallback.style.background = `linear-gradient(145deg,${v.from},${v.to})`;
+    bannerFallback.textContent = v.icon;
+  };
+  if (g.image_url && g.image_url.trim() !== "") {
+    bannerImg.src = g.image_url;
+    bannerImg.classList.remove("hidden");
+    bannerFallback.classList.add("hidden");
+    bannerImg.onerror = showFallback;
+  } else {
+    showFallback();
+  }
+  const grid = document.getElementById("packagesGrid");
+  grid.innerHTML = "";
+  g.packages.forEach((p, idx) => {
+    const el = document.createElement("button");
+    el.className = "package-card";
+    el.innerHTML = `
+      <div class="p-icon">🪙</div>
+      <div class="p-label">${p.label}</div>
+      <div class="p-price">${fmt(p.price)} so'm</div>
+    `;
+    el.addEventListener("click", () => buyPackage(g.id, idx));
+    grid.appendChild(el);
+  });
+  document.getElementById("gameOverlay").classList.remove("hidden");
+}
+
+async function buyPackage(gameId, packageIndex) {
+  try {
+    const res = await api("/api/order", {
+      method: "POST",
+      body: JSON.stringify({ game_id: gameId, package_index: packageIndex }),
+    });
+    STATE.user.balance = res.balance;
+    applyUser(STATE.user);
+    document.getElementById("gameOverlay").classList.add("hidden");
+    toast("✅ Buyurtma muvaffaqiyatli amalga oshirildi!");
+  } catch (e) {
+    if (e.data && e.data.error === "insufficient_balance") {
+      toast("❌ Balansingiz yetarli emas. Avval to'ldiring.");
+    } else {
+      toast("❌ Xatolik yuz berdi");
+    }
+  }
+}
+
+/* ============================== REVIEWS ============================== */
+
+async function loadReviews() {
+  const reviews = await api("/api/reviews");
+  const list = document.getElementById("reviewsList");
+  list.innerHTML = "";
+  if (reviews.length === 0) {
+    list.innerHTML = '<div class="empty-note">Hali fikrlar yo\'q. Birinchi bo\'ling!</div>';
+    return;
+  }
+  reviews.slice(0, 8).forEach(r => {
+    const el = document.createElement("div");
+    el.className = "review-item";
+    const name = r.full_name || r.username || "Foydalanuvchi";
+    el.innerHTML = `
+      <div class="review-name">${name}</div>
+      <div class="review-text">${escapeHtml(r.text)}</div>
+      <div class="review-stars">${"⭐".repeat(Math.max(1, Math.min(5, r.rating)))}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function escapeHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ============================== LEADERBOARD ============================== */
+
+async function loadLeaderboard() {
+  const list = await api("/api/leaderboard");
+  const el = document.getElementById("leaderboardList");
+  el.innerHTML = "";
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty-note">Hozircha xaridorlar yo\'q</div>';
+    return;
+  }
+  const medals = ["🥇", "🥈", "🥉"];
+  list.forEach((u, i) => {
+    const name = u.full_name || u.username || ("ID " + u.tg_id);
+    const rankHtml = i < 3 ? medals[i] : "#" + (i + 1);
+    const row = document.createElement("div");
+    row.className = "lb-item";
+    row.innerHTML = `
+      <div class="lb-rank ${i < 3 ? "medal" : ""}">${rankHtml}</div>
+      <img class="lb-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=${u.tg_id}">
+      <div class="lb-info">
+        <div class="lb-name">${name}</div>
+        <div class="lb-meta">${u.order_count} buyurtma</div>
+      </div>
+      <div class="lb-amount">${fmt(u.total_spent)} UZS</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ============================== ORDERS ============================== */
+
+async function loadOrders() {
+  const orders = await api("/api/orders");
+  const el = document.getElementById("ordersList");
+  el.innerHTML = "";
+  if (orders.length === 0) {
+    el.innerHTML = '<div class="empty-note">Buyurtmalar mavjud emas</div>';
+    return;
+  }
+  orders.forEach(o => {
+    const row = document.createElement("div");
+    row.className = "order-item";
+    const date = new Date(o.created_at).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    row.innerHTML = `
+      <div>
+        <div class="order-game">${o.game_name || "Xizmat"} — ${o.package_label || ""}</div>
+        <div class="order-meta">${date}</div>
+      </div>
+      <div class="order-price">${fmt(o.price)} so'm</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ============================== TOPUP FLOW ============================== */
+
+let topupState = { method: "UZCARD", amount: 0, timerInterval: null, card: null };
+
+function resetTopupFlow() {
+  show("hisob-step-methods");
+}
+
+function show(id) {
+  ["hisob-step-methods", "hisob-step-amount", "hisob-step-pay"].forEach(x => {
+    document.getElementById(x).classList.toggle("hidden", x !== id);
+  });
+}
+
+async function goToAmountStep(method) {
+  topupState.method = method;
+  document.getElementById("chosenMethod").textContent = method;
+  document.getElementById("amountInput").value = "";
+  show("hisob-step-amount");
+}
+
+async function goToPayStep() {
+  const raw = document.getElementById("amountInput").value.replace(/\D/g, "");
+  const amount = parseInt(raw || "0", 10);
+  if (amount < 1000) {
+    toast("Eng kam summa 1 000 so'm");
+    return;
+  }
+  topupState.amount = amount;
+
+  if (!topupState.card) {
+    topupState.card = await api("/api/topup-info");
+  }
+  document.getElementById("payAmount").textContent = fmt(amount);
+  document.getElementById("cardNumber").textContent = topupState.card.card_number;
+  document.getElementById("cardHolder").textContent = topupState.card.card_holder;
+  document.getElementById("cardBank").textContent = topupState.card.card_bank;
+
+  show("hisob-step-pay");
+  startPayTimer(180);
+}
+
+function startPayTimer(seconds) {
+  clearInterval(topupState.timerInterval);
+  let remaining = seconds;
+  const total = seconds;
+  const label = document.getElementById("payTimer");
+  const fill = document.getElementById("progressFill");
+  const tick = () => {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    label.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+    fill.style.width = (remaining / total * 100) + "%";
+    if (remaining <= 0) {
+      clearInterval(topupState.timerInterval);
+      toast("⏱ Vaqt tugadi, qaytadan urinib ko'ring");
+      resetTopupFlow();
+      return;
+    }
+    remaining--;
+  };
+  tick();
+  topupState.timerInterval = setInterval(tick, 1000);
+}
+
+async function confirmPaid() {
+  try {
+    await api("/api/topup/request", {
+      method: "POST",
+      body: JSON.stringify({ amount: topupState.amount, method: topupState.method }),
+    });
+    clearInterval(topupState.timerInterval);
+    toast("✅ So'rovingiz qabul qilindi, tez orada tasdiqlanadi");
+    resetTopupFlow();
+  } catch (e) {
+    toast("❌ Xatolik yuz berdi");
+  }
+}
+
+/* ============================== EVENTS ============================== */
+
+function bindEvents() {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+
+  document.getElementById("topupBtnHome").addEventListener("click", () => showView("hisob"));
+  document.getElementById("topupBtnProfile").addEventListener("click", () => showView("hisob"));
+  document.getElementById("topDonatersBtn").addEventListener("click", () => showView("top"));
+  document.getElementById("seeAllGames").addEventListener("click", () => {
+    document.getElementById("gamesGrid").scrollIntoView({ behavior: "smooth" });
+  });
+
+  document.getElementById("openProfile").addEventListener("click", () => showView("profile"));
+
+  document.getElementById("langBtn").addEventListener("click", async () => {
+    const next = STATE.user.lang === "uz" ? "ru" : "uz";
+    const res = await api("/api/lang", { method: "POST", body: JSON.stringify({ lang: next }) });
+    STATE.user.lang = res.lang;
+    document.getElementById("langBtn").textContent = res.lang.toUpperCase();
+  });
+
+  document.getElementById("themeBtn").addEventListener("click", async () => {
+    const next = document.body.classList.contains("light") ? "dark" : "light";
+    const res = await api("/api/theme", { method: "POST", body: JSON.stringify({ theme: next }) });
+    STATE.user.theme = res.theme;
+    document.body.classList.toggle("light", res.theme === "light");
+    document.getElementById("themeBtn").textContent = res.theme === "light" ? "☀️" : "🌙";
+  });
+
+  document.querySelectorAll(".method-card").forEach(btn => {
+    btn.addEventListener("click", () => goToAmountStep(btn.dataset.method));
+  });
+  document.querySelectorAll(".chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("amountInput").value = btn.dataset.amt;
+    });
+  });
+  document.getElementById("goToPayment").addEventListener("click", goToPayStep);
+  document.getElementById("backToMethods").addEventListener("click", () => show("hisob-step-methods"));
+  document.getElementById("confirmPaidBtn").addEventListener("click", confirmPaid);
+  document.getElementById("copyCardBtn").addEventListener("click", () => {
+    const num = document.getElementById("cardNumber").textContent;
+    navigator.clipboard && navigator.clipboard.writeText(num.replace(/\s/g, ""));
+    toast("📋 Nusxalandi");
+  });
+
+  document.getElementById("closeGameOverlay").addEventListener("click", () => {
+    document.getElementById("gameOverlay").classList.add("hidden");
+  });
+
+  document.getElementById("leaveReviewBtn").addEventListener("click", () => {
+    document.getElementById("reviewOverlay").classList.remove("hidden");
+  });
+  document.getElementById("closeReviewOverlay").addEventListener("click", () => {
+    document.getElementById("reviewOverlay").classList.add("hidden");
+  });
+  document.getElementById("submitReviewBtn").addEventListener("click", async () => {
+    const text = document.getElementById("reviewText").value.trim();
+    if (!text) return;
+    try {
+      await api("/api/reviews", { method: "POST", body: JSON.stringify({ text, rating: 5 }) });
+      document.getElementById("reviewText").value = "";
+      document.getElementById("reviewOverlay").classList.add("hidden");
+      toast("✅ Rahmat! Fikringiz qo'shildi");
+      loadReviews();
+    } catch (e) {
+      toast("❌ Xatolik yuz berdi");
+    }
+  });
+
+  document.getElementById("inviteBtn").addEventListener("click", () => {
+    const link = `https://t.me/share/url?url=Assalomu alaykum! Mening havolam orqali ro'yxatdan o'ting va bonus oling.`;
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
+    else window.open(link, "_blank");
+  });
+}
+
+boot();
+
+</script>
+</body>
+</html>
