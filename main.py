@@ -307,6 +307,56 @@ def set_setting(key, value):
     conn.commit(); conn.close()
 
 
+# ============================================================================
+# CUSTOMIZABLE BUTTON ICONS
+#
+# Every icon in the app has a hard-coded emoji default (always works, needs
+# no network / no file). The admin can optionally override any of them with
+# an uploaded PNG via /admin -> "Tugma belgilarini boshqarish". Overrides are
+# stored as "icon:<slot>" = "emoji:<char>" or "image:<telegram_file_id>".
+# ============================================================================
+
+ICON_SLOTS = {
+    "balance": ("💼", "Balans belgisi"),
+    "kanal": ("📢", "Kanal tugmasi"),
+    "yordam": ("🆘", "Yordam tugmasi"),
+    "til": ("🌐", "Til tugmasi"),
+    "reviews": ("💬", "Fikrlar sarlavhasi"),
+    "nav_top": ("🏆", "Pastki menyu — Top"),
+    "nav_hisob": ("💳", "Pastki menyu — Hisob"),
+    "nav_orders": ("🧾", "Pastki menyu — Buyurtmalar"),
+    "nav_profile": ("👤", "Pastki menyu — Profil"),
+    "invite": ("🤝", "Do'st taklif belgisi"),
+    "topdonor": ("🏅", "Top donatlar belgisi"),
+    "support2": ("🆘", "Support (profil) belgisi"),
+}
+
+
+def get_all_icons():
+    result = {}
+    for slot, (default_emoji, _label) in ICON_SLOTS.items():
+        raw = get_setting(f"icon:{slot}")
+        if not raw:
+            result[slot] = {"type": "emoji", "value": default_emoji}
+        elif raw.startswith("image:"):
+            result[slot] = {"type": "image", "value": raw[len("image:"):]}
+        elif raw.startswith("emoji:"):
+            result[slot] = {"type": "emoji", "value": raw[len("emoji:"):]}
+        else:
+            result[slot] = {"type": "emoji", "value": default_emoji}
+    return result
+
+
+def set_icon(slot, kind, value):
+    set_setting(f"icon:{slot}", f"{kind}:{value}")
+
+
+def reset_icon(slot):
+    conn = get_conn()
+    conn.execute("DELETE FROM settings WHERE key=?", (f"icon:{slot}",))
+    conn.commit(); conn.close()
+
+
 def create_order(user_tg_id, game_id, game_name, package_label, price, player_id=None):
     conn = get_conn(); c = conn.cursor()
     c.execute("INSERT INTO orders (user_id, game_id, game_name, package_label, price, player_id, created_at) VALUES (?,?,?,?,?,?,?)",
@@ -648,6 +698,15 @@ def api_reviews_post():
     return jsonify({"ok": True, "id": rid})
 
 
+@flask_app.route("/api/icons")
+def api_icons():
+    icons = get_all_icons()
+    for slot, data in icons.items():
+        if data["type"] == "image":
+            data["value"] = resolve_img(data["value"])
+    return jsonify(icons)
+
+
 @flask_app.route("/api/topup-info")
 def api_topup_info():
     return jsonify({"card_number": CARD_NUMBER, "card_holder": CARD_HOLDER, "card_bank": CARD_BANK, "min_amount": 1000})
@@ -700,6 +759,7 @@ class AdminStates(StatesGroup):
     waiting_new_game_rating = State()
     waiting_balance_target = State()
     waiting_balance_amount = State()
+    waiting_icon_value = State()
 
 
 def is_admin(tg_id):
@@ -725,6 +785,7 @@ def admin_menu_kb():
         [InlineKeyboardButton(text="🧹 Izohlarni tozalash", callback_data="adm_clearreviews")],
         [InlineKeyboardButton(text="💸 Pul tashlash (+/-)", callback_data="adm_addbalance")],
         [InlineKeyboardButton(text="🔌 HyperPin holatini tekshirish", callback_data="adm_hpcheck")],
+        [InlineKeyboardButton(text="🖼 Tugma belgilarini boshqarish", callback_data="adm_icons")],
     ])
 
 
@@ -968,6 +1029,81 @@ async def adm_hpcheck(call: CallbackQuery):
         "bu xabarni to'liq nusxalab dasturchiga yuboring — endpoint nomlarini shunga qarab moslashtirish kerak."
     )
     await call.message.answer(text, parse_mode="HTML")
+
+
+@router.callback_query(F.data == "adm_icons")
+async def adm_icons_menu(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    icons = get_all_icons()
+    rows = []
+    for slot, (default_emoji, label) in ICON_SLOTS.items():
+        current = icons[slot]
+        shown = current["value"] if current["type"] == "emoji" else "🖼"
+        rows.append([InlineKeyboardButton(text=f"{shown} {label}", callback_data=f"adm_icon_{slot}")])
+    rows.append([InlineKeyboardButton(text="⬅ Orqaga", callback_data="adm_cancel")])
+    await call.message.edit_text(
+        "🖼 Qaysi tugma belgisini o'zgartirasiz? (hozirgi holati chapda ko'rsatilgan)",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data.startswith("adm_icon_"))
+async def adm_icon_pick(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    slot = call.data[len("adm_icon_"):]
+    default_emoji, label = ICON_SLOTS[slot]
+    await state.set_state(AdminStates.waiting_icon_value)
+    await state.update_data(icon_slot=slot)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="↩️ Standart emojiga qaytarish", callback_data=f"adm_iconreset_{slot}")],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data="adm_cancel")],
+    ])
+    await call.message.edit_text(
+        f"🖼 <b>{label}</b>\nStandart: {default_emoji}\n\n"
+        "Yangi belgi uchun bitta emoji yuboring (masalan 🔥) YOKI rasm (PNG/JPG) yuboring.",
+        reply_markup=kb, parse_mode="HTML",
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data.startswith("adm_iconreset_"))
+async def adm_icon_reset(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    slot = call.data[len("adm_iconreset_"):]
+    reset_icon(slot)
+    await state.clear()
+    await call.answer("Standart holatga qaytarildi ✅")
+    await adm_icons_menu(call)
+
+
+@router.message(AdminStates.waiting_icon_value, F.photo)
+async def adm_icon_set_image(message: Message, state: FSMContext):
+    data = await state.get_data()
+    slot = data.get("icon_slot")
+    if not slot:
+        await state.clear(); return
+    set_icon(slot, "image", message.photo[-1].file_id)
+    await state.clear()
+    await message.answer("✅ Belgi rasm bilan yangilandi.", reply_markup=admin_menu_kb())
+
+
+@router.message(AdminStates.waiting_icon_value, F.text)
+async def adm_icon_set_emoji(message: Message, state: FSMContext):
+    data = await state.get_data()
+    slot = data.get("icon_slot")
+    if not slot:
+        await state.clear(); return
+    value = message.text.strip()
+    if len(value) > 8:
+        await message.answer("❌ Iltimos bitta emoji yuboring yoki rasm yuboring.")
+        return
+    set_icon(slot, "emoji", value)
+    await state.clear()
+    await message.answer(f"✅ Belgi {value} bilan yangilandi.", reply_markup=admin_menu_kb())
 
 
 @router.callback_query(F.data == "adm_addbalance")
