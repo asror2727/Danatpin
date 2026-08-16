@@ -45,6 +45,8 @@ CARD_BANK = os.getenv("CARD_BANK", "UZCARD")
 START_IMAGE = os.getenv("START_IMAGE", "")
 APP_VERSION = os.getenv("APP_VERSION", "1.01")
 APP_OWNER = os.getenv("APP_OWNER", "@x7fan")
+HYPERPIN_API_URL = os.getenv("HYPERPIN_API_URL", "https://api.hyperpin.top/api/v1").rstrip("/")
+HYPERPIN_API_KEY = os.getenv("HYPERPIN_API_KEY", "")
 DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "data.db"))
 PORT = int(os.getenv("PORT", "10000"))
 INDEX_HTML_PATH = os.path.join(os.path.dirname(__file__), "index.html")
@@ -81,6 +83,8 @@ def init_db():
             name TEXT NOT NULL, image_url TEXT,
             packages TEXT NOT NULL DEFAULT '[]',
             rating REAL NOT NULL DEFAULT 5.0,
+            hyperpin_enabled INTEGER NOT NULL DEFAULT 0,
+            hyperpin_game_code TEXT,
             active INTEGER NOT NULL DEFAULT 1,
             sort_order INTEGER NOT NULL DEFAULT 0
         );
@@ -88,6 +92,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL, game_id INTEGER,
             game_name TEXT, package_label TEXT, price INTEGER NOT NULL,
+            player_id TEXT, hyperpin_order_id TEXT, hyperpin_status TEXT,
             status TEXT NOT NULL DEFAULT 'completed', created_at TEXT
         );
         CREATE TABLE IF NOT EXISTS topups (
@@ -109,6 +114,32 @@ def init_db():
         );
     """)
     conn.commit()
+
+    # --- lightweight migration: add any columns that older deployed
+    # databases might be missing, so existing data.db files don't break
+    # when new columns are introduced in later versions of this bot ---
+    def ensure_columns(table, columns):
+        c.execute(f"PRAGMA table_info({table})")
+        existing = {row["name"] for row in c.fetchall()}
+        for col_name, col_def in columns:
+            if col_name not in existing:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}")
+        conn.commit()
+
+    ensure_columns("games", [
+        ("rating", "REAL NOT NULL DEFAULT 5.0"),
+        ("hyperpin_enabled", "INTEGER NOT NULL DEFAULT 0"),
+        ("hyperpin_game_code", "TEXT"),
+    ])
+    ensure_columns("orders", [
+        ("player_id", "TEXT"),
+        ("hyperpin_order_id", "TEXT"),
+        ("hyperpin_status", "TEXT"),
+    ])
+    ensure_columns("users", [
+        ("theme", "TEXT NOT NULL DEFAULT 'dark'"),
+    ])
+
     conn.close()
 
 
@@ -171,10 +202,11 @@ def get_game(game_id):
     return g
 
 
-def add_game(name, image_url, packages, rating=5.0):
+def add_game(name, image_url, packages, rating=5.0, hyperpin_enabled=0, hyperpin_game_code=None):
     conn = get_conn(); c = conn.cursor()
-    c.execute("INSERT INTO games (name, image_url, packages, rating, sort_order) VALUES (?,?,?,?,999)",
-               (name, image_url, json.dumps(packages), rating))
+    c.execute("""INSERT INTO games (name, image_url, packages, rating, hyperpin_enabled, hyperpin_game_code, sort_order)
+                 VALUES (?,?,?,?,?,?,999)""",
+               (name, image_url, json.dumps(packages), rating, hyperpin_enabled, hyperpin_game_code))
     conn.commit(); gid = c.lastrowid; conn.close(); return gid
 
 
@@ -191,10 +223,75 @@ def list_games_all():
     return rows
 
 
+def set_order_hyperpin(order_id, hyperpin_order_id, hyperpin_status, player_id=None):
+    conn = get_conn()
+    conn.execute(
+        "UPDATE orders SET hyperpin_order_id=?, hyperpin_status=?, player_id=COALESCE(?, player_id) WHERE id=?",
+        (hyperpin_order_id, hyperpin_status, player_id, order_id),
+    )
+    conn.commit(); conn.close()
+
+
 def clear_all_reviews():
     conn = get_conn()
     conn.execute("DELETE FROM reviews")
     conn.commit(); conn.close()
+
+
+# ============================================================================
+# HYPERPIN INTEGRATION
+#
+# HONESTY NOTE: api.hyperpin.top has no public documentation that could be
+# found. The functions below use the most common pattern for this type of
+# reseller top-up panel (single POST endpoint + api_key + action), but the
+# exact field names (action / order / check names, param names) are NOT
+# verified against the real service — this sandbox has no internet access
+# to test it. Use the admin bot button "🔌 HyperPin holatini tekshirish" to
+# see the RAW response HyperPin actually sends back; if it doesn't look
+# right, forward that raw text and the exact field names get corrected.
+# ============================================================================
+
+def hyperpin_request(payload: dict, timeout=15):
+    """Low-level POST to the HyperPin API. Returns (ok, data_or_error_text)."""
+    if not HYPERPIN_API_KEY:
+        return False, "HYPERPIN_API_KEY sozlanmagan"
+    try:
+        r = requests.post(
+            HYPERPIN_API_URL,
+            json={**payload, "api_key": HYPERPIN_API_KEY},
+            headers={"Authorization": f"Bearer {HYPERPIN_API_KEY}"},
+            timeout=timeout,
+        )
+        try:
+            data = r.json()
+        except ValueError:
+            data = {"raw_text": r.text[:500]}
+        return (r.status_code < 400), {"status_code": r.status_code, "body": data}
+    except Exception as e:
+        return False, str(e)
+
+
+def hyperpin_check_balance():
+    return hyperpin_request({"action": "balance"})
+
+
+def hyperpin_check_player_id(game_code, player_id, server_id=None):
+    payload = {"action": "check_id", "game": game_code, "player_id": player_id}
+    if server_id:
+        payload["server_id"] = server_id
+    return hyperpin_request(payload)
+
+
+def hyperpin_create_order(game_code, hyperpin_product_code, player_id, server_id=None):
+    payload = {
+        "action": "create_order",
+        "game": game_code,
+        "product": hyperpin_product_code,
+        "player_id": player_id,
+    }
+    if server_id:
+        payload["server_id"] = server_id
+    return hyperpin_request(payload)
 
 
 def get_setting(key, default=None):
@@ -210,10 +307,10 @@ def set_setting(key, value):
     conn.commit(); conn.close()
 
 
-def create_order(user_tg_id, game_id, game_name, package_label, price):
+def create_order(user_tg_id, game_id, game_name, package_label, price, player_id=None):
     conn = get_conn(); c = conn.cursor()
-    c.execute("INSERT INTO orders (user_id, game_id, game_name, package_label, price, created_at) VALUES (?,?,?,?,?,?)",
-               (user_tg_id, game_id, game_name, package_label, price, now()))
+    c.execute("INSERT INTO orders (user_id, game_id, game_name, package_label, price, player_id, created_at) VALUES (?,?,?,?,?,?,?)",
+               (user_tg_id, game_id, game_name, package_label, price, player_id, now()))
     conn.commit(); oid = c.lastrowid; conn.close(); return oid
 
 
@@ -456,6 +553,21 @@ def api_games():
     return jsonify(games)
 
 
+@flask_app.route("/api/hyperpin/check-id", methods=["POST"])
+def api_hyperpin_check_id():
+    user, err = require_user()
+    if err: return err
+    body = request.json or {}
+    game = get_game(body.get("game_id"))
+    player_id = (body.get("player_id") or "").strip()
+    if not game or not player_id:
+        return jsonify({"error": "invalid"}), 400
+    if not game["hyperpin_enabled"] or not game["hyperpin_game_code"]:
+        return jsonify({"error": "not_linked"}), 400
+    ok, result = hyperpin_check_player_id(game["hyperpin_game_code"], player_id, body.get("server_id"))
+    return jsonify({"ok": ok, "result": result})
+
+
 @flask_app.route("/api/order", methods=["POST"])
 def api_order():
     user, err = require_user()
@@ -463,13 +575,35 @@ def api_order():
     body = request.json or {}
     game = get_game(body.get("game_id"))
     idx = body.get("package_index")
+    player_id = (body.get("player_id") or "").strip() or None
     if not game or idx is None or idx >= len(game["packages"]):
         return jsonify({"error": "invalid package"}), 400
     package = game["packages"][idx]
+
+    if game["hyperpin_enabled"] and not player_id:
+        return jsonify({"error": "player_id_required"}), 400
+
     nb = change_balance(user["tg_id"], -package["price"])
     if nb is False:
         return jsonify({"error": "insufficient_balance"}), 400
-    oid = create_order(user["tg_id"], game["id"], game["name"], package["label"], package["price"])
+
+    oid = create_order(user["tg_id"], game["id"], game["name"], package["label"], package["price"], player_id)
+
+    if game["hyperpin_enabled"] and package.get("hyperpin_code"):
+        ok, result = hyperpin_create_order(game["hyperpin_game_code"], package["hyperpin_code"], player_id, body.get("server_id"))
+        if not ok:
+            # HyperPin failed — refund immediately, don't leave the user out of pocket
+            nb = change_balance(user["tg_id"], package["price"])
+            set_order_hyperpin(oid, None, "failed")
+            tg_send_message(user["tg_id"], f"❌ Buyurtma bajarilmadi (yetkazib beruvchida xatolik), summa qaytarildi: {package['price']:,} so'm".replace(",", " "))
+            for admin_id in ADMIN_IDS:
+                tg_send_message(admin_id, f"⚠️ HyperPin xatosi (buyurtma #{oid}):\n<code>{json.dumps(result, ensure_ascii=False)[:800]}</code>")
+            return jsonify({"error": "fulfillment_failed", "balance": nb}), 502
+        hp_order_id = None
+        if isinstance(result, dict) and isinstance(result.get("body"), dict):
+            hp_order_id = result["body"].get("order_id") or result["body"].get("id")
+        set_order_hyperpin(oid, str(hp_order_id) if hp_order_id else None, "sent")
+
     tg_send_message(
         user["tg_id"],
         (f"✅ Buyurtmangiz bajarildi!\n🎮 {game['name']} — {package['label']}\n"
@@ -561,6 +695,7 @@ class AdminStates(StatesGroup):
     waiting_start_image = State()
     waiting_new_game_name = State()
     waiting_new_game_image = State()
+    waiting_new_game_hyperpin = State()
     waiting_new_game_package = State()
     waiting_new_game_rating = State()
     waiting_balance_target = State()
@@ -589,6 +724,7 @@ def admin_menu_kb():
         [InlineKeyboardButton(text="🗑 O'yinlarni boshqarish", callback_data="adm_managegames")],
         [InlineKeyboardButton(text="🧹 Izohlarni tozalash", callback_data="adm_clearreviews")],
         [InlineKeyboardButton(text="💸 Pul tashlash (+/-)", callback_data="adm_addbalance")],
+        [InlineKeyboardButton(text="🔌 HyperPin holatini tekshirish", callback_data="adm_hpcheck")],
     ])
 
 
@@ -711,11 +847,34 @@ async def adm_newgame_name(message: Message, state: FSMContext):
 @router.message(AdminStates.waiting_new_game_image, F.photo)
 async def adm_newgame_image(message: Message, state: FSMContext):
     await state.update_data(image=message.photo[-1].file_id)
-    await state.set_state(AdminStates.waiting_new_game_package)
+    await state.set_state(AdminStates.waiting_new_game_hyperpin)
     await message.answer(
-        "📦 Paketlarni kiriting. Format: <code>Nomi-Narxi</code>, har biri yangi qatorda.\n\n"
-        "Masalan:\n60 UC-11700\n325 UC-59000\n660 UC-115000",
+        "🔌 Bu o'yin HyperPin orqali avtomatik yuklab berilsinmi?\n\n"
+        "Agar HA bo'lsa — HyperPin'dagi o'yin kodini yuboring (masalan: <code>pubgm</code>).\n"
+        "Agar YO'Q bo'lsa — <code>yoq</code> deb yozing (buyurtmalar qo'lda bajariladi).",
         reply_markup=cancel_kb(), parse_mode="HTML")
+
+
+@router.message(AdminStates.waiting_new_game_hyperpin, F.text)
+async def adm_newgame_hyperpin(message: Message, state: FSMContext):
+    text = message.text.strip()
+    if text.lower() in ("yoq", "yo'q", "yoq.", "no", "-"):
+        await state.update_data(hp_enabled=0, hp_code=None)
+    else:
+        await state.update_data(hp_enabled=1, hp_code=text)
+    await state.set_state(AdminStates.waiting_new_game_package)
+    hint = (
+        "📦 Paketlarni kiriting, har biri yangi qatorda.\n\n"
+        "Oddiy (qo'lda bajariladigan) format: <code>Nomi-Narxi</code>\n"
+        "Masalan: 60 UC-11700\n\n"
+    )
+    data = await state.get_data()
+    if data.get("hp_enabled"):
+        hint += (
+            "HyperPin bilan avtomatik format: <code>Nomi-Narxi-HyperPinKod</code>\n"
+            "Masalan: 60 UC-11700-60uc\n"
+        )
+    await message.answer(hint, reply_markup=cancel_kb(), parse_mode="HTML")
 
 
 @router.message(AdminStates.waiting_new_game_package, F.text)
@@ -725,10 +884,18 @@ async def adm_newgame_packages(message: Message, state: FSMContext):
     for line in message.text.strip().splitlines():
         line = line.strip()
         if not line or "-" not in line: continue
-        label, _, price = line.rpartition("-")
-        price = "".join(ch for ch in price if ch.isdigit())
-        if not price: continue
-        packages.append({"label": label.strip(), "price": int(price)})
+        parts = line.split("-")
+        if data.get("hp_enabled") and len(parts) >= 3:
+            label = parts[0].strip()
+            price = "".join(ch for ch in parts[1] if ch.isdigit())
+            hp_code = parts[2].strip()
+            if not price: continue
+            packages.append({"label": label, "price": int(price), "hyperpin_code": hp_code})
+        else:
+            label, _, price = line.rpartition("-")
+            price = "".join(ch for ch in price if ch.isdigit())
+            if not price: continue
+            packages.append({"label": label.strip(), "price": int(price)})
     if not packages:
         await message.answer("❌ Format noto'g'ri. Masalan: 60 UC-11700")
         return
@@ -745,7 +912,8 @@ async def adm_newgame_rating(message: Message, state: FSMContext):
     except ValueError:
         rating = 5.0
     data = await state.get_data()
-    add_game(data["name"], data["image"], data["packages"], rating)
+    add_game(data["name"], data["image"], data["packages"], rating,
+              data.get("hp_enabled", 0), data.get("hp_code"))
     await state.clear()
     await message.answer(f"✅ \"{data['name']}\" qo'shildi ({len(data['packages'])} ta paket, ⭐{rating}).", reply_markup=admin_menu_kb())
 
@@ -782,6 +950,24 @@ async def adm_clearreviews(call: CallbackQuery):
     clear_all_reviews()
     await call.message.edit_text("🧹 Barcha izohlar tozalandi.", reply_markup=admin_menu_kb())
     await call.answer()
+
+
+@router.callback_query(F.data == "adm_hpcheck")
+async def adm_hpcheck(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    await call.answer("Tekshirilmoqda...")
+    ok, result = hyperpin_check_balance()
+    key_status = "✅" if HYPERPIN_API_KEY else "❌ (HYPERPIN_API_KEY yo'q)"
+    text = (
+        "🔌 <b>HyperPin ulanish natijasi</b>\n\n"
+        f"URL: <code>{HYPERPIN_API_URL}</code>\n"
+        f"Key sozlangan: {key_status}\n"
+        f"Natija (ok={ok}):\n<code>{json.dumps(result, ensure_ascii=False, indent=None)[:1200]}</code>\n\n"
+        "Agar bu javob noto'g'ri ko'rinsa (masalan HTML sahifa yoki 404), "
+        "bu xabarni to'liq nusxalab dasturchiga yuboring — endpoint nomlarini shunga qarab moslashtirish kerak."
+    )
+    await call.message.answer(text, parse_mode="HTML")
 
 
 @router.callback_query(F.data == "adm_addbalance")
