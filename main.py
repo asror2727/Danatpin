@@ -7,11 +7,18 @@ import logging
 import asyncio
 import threading
 import datetime
+import io
 from urllib.parse import parse_qsl
 
 import requests
 from flask import Flask, request, jsonify, redirect
 from dotenv import load_dotenv
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
 
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.client.default import DefaultBotProperties
@@ -45,11 +52,15 @@ CARD_BANK = os.getenv("CARD_BANK", "UZCARD")
 START_IMAGE = os.getenv("START_IMAGE", "")
 APP_VERSION = os.getenv("APP_VERSION", "1.01")
 APP_OWNER = os.getenv("APP_OWNER", "@x7fan")
+REFERRAL_SIGNUP_BONUS = int(os.getenv("REFERRAL_SIGNUP_BONUS", "200"))
+REFERRAL_COMMISSION_RATE = float(os.getenv("REFERRAL_COMMISSION_RATE", "0.0005"))  # 0.05%
 HYPERPIN_API_URL = os.getenv("HYPERPIN_API_URL", "https://api.hyperpin.top/api/v1").rstrip("/")
 HYPERPIN_API_KEY = os.getenv("HYPERPIN_API_KEY", "")
 DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "data.db"))
 PORT = int(os.getenv("PORT", "10000"))
 INDEX_HTML_PATH = os.path.join(os.path.dirname(__file__), "index.html")
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 # ============================================================================
 # DATABASE
@@ -76,6 +87,7 @@ def init_db():
             balance INTEGER NOT NULL DEFAULT 0,
             lang TEXT NOT NULL DEFAULT 'uz',
             theme TEXT NOT NULL DEFAULT 'dark',
+            referred_by INTEGER,
             created_at TEXT
         );
         CREATE TABLE IF NOT EXISTS games (
@@ -138,12 +150,13 @@ def init_db():
     ])
     ensure_columns("users", [
         ("theme", "TEXT NOT NULL DEFAULT 'dark'"),
+        ("referred_by", "INTEGER"),
     ])
 
     conn.close()
 
 
-def get_or_create_user(tg_id, username=None, full_name=None):
+def get_or_create_user(tg_id, username=None, full_name=None, referred_by=None):
     conn = get_conn(); c = conn.cursor()
     c.execute("SELECT * FROM users WHERE tg_id=?", (tg_id,))
     row = c.fetchone()
@@ -152,11 +165,39 @@ def get_or_create_user(tg_id, username=None, full_name=None):
         conn.commit()
         c.execute("SELECT * FROM users WHERE tg_id=?", (tg_id,))
         row = dict(c.fetchone()); conn.close(); return row
-    c.execute("INSERT INTO users (tg_id, username, full_name, created_at) VALUES (?,?,?,?)",
-               (tg_id, username, full_name, now()))
+    # brand-new user: attach referrer (if valid and not self-referral) and pay the signup bonus
+    valid_referrer = None
+    if referred_by and referred_by != tg_id:
+        c.execute("SELECT tg_id FROM users WHERE tg_id=?", (referred_by,))
+        if c.fetchone():
+            valid_referrer = referred_by
+    c.execute("INSERT INTO users (tg_id, username, full_name, referred_by, created_at) VALUES (?,?,?,?,?)",
+               (tg_id, username, full_name, valid_referrer, now()))
     conn.commit()
     c.execute("SELECT * FROM users WHERE tg_id=?", (tg_id,))
-    row = dict(c.fetchone()); conn.close(); return row
+    row = dict(c.fetchone()); conn.close()
+    if valid_referrer:
+        new_balance = change_balance(valid_referrer, REFERRAL_SIGNUP_BONUS)
+        tg_send_message(
+            valid_referrer,
+            f"🤝 Sizning taklifingiz orqali yangi foydalanuvchi qo'shildi!\n"
+            f"💰 Balansingizga {REFERRAL_SIGNUP_BONUS:,} so'm bonus qo'shildi.\n"
+            f"Yangi balans: {new_balance:,} so'm".replace(",", " "),
+        )
+    return row
+
+
+def get_referral_stats(tg_id):
+    conn = get_conn(); c = conn.cursor()
+    c.execute("SELECT COUNT(*) n FROM users WHERE referred_by=?", (tg_id,))
+    invited = c.fetchone()["n"]
+    c.execute("""SELECT COALESCE(SUM(orders.price),0) total FROM orders
+                 JOIN users ON users.tg_id = orders.user_id
+                 WHERE users.referred_by=?""", (tg_id,))
+    referred_sales = c.fetchone()["total"]
+    conn.close()
+    earned_commission = int(referred_sales * REFERRAL_COMMISSION_RATE)
+    return {"invited": invited, "referred_sales": referred_sales, "earned_commission": earned_commission}
 
 
 def get_user(tg_id):
@@ -294,6 +335,77 @@ def hyperpin_create_order(game_code, hyperpin_product_code, player_id, server_id
     return hyperpin_request(payload)
 
 
+# ============================================================================
+# IMAGE PROCESSING: automatic background removal for admin-uploaded icons
+#
+# Approach: flood-fill from all 4 corners, treating pixels close in color to
+# the corner as "background" and making them transparent. This works well
+# for the common case of a flat-color (white/black/solid) background, which
+# covers most icon/logo PNGs. It will not cleanly separate busy/photographic
+# backgrounds — for those, upload an already-transparent PNG instead.
+# ============================================================================
+
+def remove_background(image_bytes: bytes, tolerance: int = 30) -> bytes:
+    if not PIL_AVAILABLE:
+        return image_bytes
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+        w, h = img.size
+        px = img.load()
+
+        def close(c1, c2):
+            return all(abs(c1[i] - c2[i]) <= tolerance for i in range(3))
+
+        corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+        bg_colors = [px[x, y][:3] for x, y in corners]
+
+        visited = bytearray(w * h)
+        stack = [c for c in corners]
+        while stack:
+            x, y = stack.pop()
+            idx = y * w + x
+            if x < 0 or y < 0 or x >= w or y >= h or visited[idx]:
+                continue
+            visited[idx] = 1
+            r, g, b, a = px[x, y]
+            if not any(close((r, g, b), bg) for bg in bg_colors):
+                continue
+            px[x, y] = (r, g, b, 0)
+            stack.extend([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
+
+        out = io.BytesIO()
+        img.save(out, "PNG")
+        return out.getvalue()
+    except Exception as e:
+        log.error(f"remove_background failed: {e}")
+        return image_bytes
+
+
+def save_processed_upload(image_bytes: bytes, prefix: str = "img") -> str:
+    """Saves processed bytes to the local uploads folder, returns a value
+    usable as an image_url ('local:<filename>')."""
+    filename = f"{prefix}_{int(datetime.datetime.utcnow().timestamp() * 1000)}.png"
+    path = os.path.join(UPLOADS_DIR, filename)
+    with open(path, "wb") as f:
+        f.write(image_bytes)
+    return f"local:{filename}"
+
+
+def download_and_debg(file_id: str, prefix: str = "img") -> str:
+    """Downloads a Telegram-hosted photo by file_id, removes its background,
+    saves it locally, and returns the new 'local:<filename>' reference.
+    Falls back to the original file_id (unprocessed) on any failure."""
+    try:
+        r = requests.get(f"{TG_API}/getFile", params={"file_id": file_id}, timeout=15)
+        file_path = r.json()["result"]["file_path"]
+        img_resp = requests.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}", timeout=15)
+        processed = remove_background(img_resp.content)
+        return save_processed_upload(processed, prefix)
+    except Exception as e:
+        log.error(f"download_and_debg failed for {file_id}: {e}")
+        return file_id
+
+
 def get_setting(key, default=None):
     conn = get_conn(); c = conn.cursor()
     c.execute("SELECT value FROM settings WHERE key=?", (key,))
@@ -322,6 +434,10 @@ ICON_SLOTS = {
     "yordam": ("🆘", "Yordam tugmasi"),
     "til": ("🌐", "Til tugmasi"),
     "reviews": ("💬", "Fikrlar sarlavhasi"),
+    "games_header": ("🎮", "O'yinlar sarlavhasi"),
+    "top_header": ("🏆", "Top sahifa sarlavhasi"),
+    "orders_header": ("🧾", "Buyurtmalar sarlavhasi"),
+    "leave_review": ("✍️", "Fikr qoldirish tugmasi"),
     "nav_top": ("🏆", "Pastki menyu — Top"),
     "nav_hisob": ("💳", "Pastki menyu — Hisob"),
     "nav_orders": ("🧾", "Pastki menyu — Buyurtmalar"),
@@ -539,6 +655,8 @@ def resolve_img(value):
         return ""
     if value.startswith("http"):
         return value
+    if value.startswith("local:"):
+        return f"/uploads/{value[len('local:'):]}"
     return f"/img/{value}"
 
 
@@ -549,6 +667,16 @@ def index():
             return f.read()
     except FileNotFoundError:
         return "index.html topilmadi. Uni main.py bilan bir xil papkaga joylashtiring.", 500
+
+
+@flask_app.route("/uploads/<path:filename>")
+def uploads_proxy(filename):
+    safe_name = os.path.basename(filename)
+    path = os.path.join(UPLOADS_DIR, safe_name)
+    if not os.path.isfile(path):
+        return "", 404
+    from flask import send_file
+    return send_file(path)
 
 
 @flask_app.route("/img/<file_id>")
@@ -639,6 +767,17 @@ def api_order():
 
     oid = create_order(user["tg_id"], game["id"], game["name"], package["label"], package["price"], player_id)
 
+    # referral commission: if this buyer was referred by someone, pay the referrer a cut
+    if user.get("referred_by"):
+        commission = int(package["price"] * REFERRAL_COMMISSION_RATE)
+        if commission > 0:
+            new_ref_balance = change_balance(user["referred_by"], commission)
+            if new_ref_balance is not None and new_ref_balance is not False:
+                tg_send_message(
+                    user["referred_by"],
+                    f"💸 Taklif qilgan do'stingiz xarid qildi — sizga {commission:,} so'm komissiya tushdi!".replace(",", " "),
+                )
+
     if game["hyperpin_enabled"] and package.get("hyperpin_code"):
         ok, result = hyperpin_create_order(game["hyperpin_game_code"], package["hyperpin_code"], player_id, body.get("server_id"))
         if not ok:
@@ -654,10 +793,18 @@ def api_order():
             hp_order_id = result["body"].get("order_id") or result["body"].get("id")
         set_order_hyperpin(oid, str(hp_order_id) if hp_order_id else None, "sent")
 
+    rate_kb = {"inline_keyboard": [[
+        {"text": "⭐", "callback_data": f"rate_{oid}_1"},
+        {"text": "⭐⭐", "callback_data": f"rate_{oid}_2"},
+        {"text": "⭐⭐⭐", "callback_data": f"rate_{oid}_3"},
+        {"text": "⭐⭐⭐⭐", "callback_data": f"rate_{oid}_4"},
+        {"text": "⭐⭐⭐⭐⭐", "callback_data": f"rate_{oid}_5"},
+    ]]}
     tg_send_message(
         user["tg_id"],
         (f"✅ Buyurtmangiz bajarildi!\n🎮 {game['name']} — {package['label']}\n"
-         f"💰 {package['price']:,} so'm\n\nIltimos, ilovada xizmatimizga fikr (izoh va yulduz) qoldiring ⭐").replace(",", " "),
+         f"💰 {package['price']:,} so'm\n\nIltimos, xizmatimizga baho bering ⭐").replace(",", " "),
+        rate_kb,
     )
     return jsonify({"ok": True, "order_id": oid, "balance": nb})
 
@@ -707,6 +854,30 @@ def api_icons():
     return jsonify(icons)
 
 
+@flask_app.route("/api/music")
+def api_music():
+    raw = get_setting("bg_music")
+    if not raw:
+        return jsonify({"url": None})
+    return jsonify({"url": resolve_img(raw)})
+
+
+@flask_app.route("/api/referral")
+def api_referral():
+    user, err = require_user()
+    if err: return err
+    stats = get_referral_stats(user["tg_id"])
+    link = f"https://t.me/{BOT_USERNAME}?start=ref{user['tg_id']}" if BOT_USERNAME else ""
+    return jsonify({
+        "code": str(user["tg_id"]),
+        "link": link,
+        "invited": stats["invited"],
+        "earned_commission": stats["earned_commission"],
+        "signup_bonus": REFERRAL_SIGNUP_BONUS,
+        "commission_percent": REFERRAL_COMMISSION_RATE * 100,
+    })
+
+
 @flask_app.route("/api/topup-info")
 def api_topup_info():
     return jsonify({"card_number": CARD_NUMBER, "card_holder": CARD_HOLDER, "card_bank": CARD_BANK, "min_amount": 1000})
@@ -749,6 +920,10 @@ def run_flask():
 # TELEGRAM BOT
 # ============================================================================
 
+class UserStates(StatesGroup):
+    waiting_review_text = State()
+
+
 class AdminStates(StatesGroup):
     waiting_banner_photo = State()
     waiting_start_image = State()
@@ -760,6 +935,7 @@ class AdminStates(StatesGroup):
     waiting_balance_target = State()
     waiting_balance_amount = State()
     waiting_icon_value = State()
+    waiting_music = State()
 
 
 def is_admin(tg_id):
@@ -767,11 +943,20 @@ def is_admin(tg_id):
 
 
 def start_kb():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚀 Ilovaga kirish", web_app=WebAppInfo(url=WEBAPP_URL))],
-        [InlineKeyboardButton(text="📢 Kanal", url=CHANNEL_URL)],
-        [InlineKeyboardButton(text="🆘 Yordam", url=SUPPORT_URL)],
-    ])
+    buttons = []
+    try:
+        buttons.append([InlineKeyboardButton(text="🚀 Ilovaga kirish", web_app=WebAppInfo(url=WEBAPP_URL))])
+    except Exception as e:
+        log.error(f"start_kb: WEBAPP_URL invalid ({WEBAPP_URL}): {e}")
+    try:
+        buttons.append([InlineKeyboardButton(text="📢 Kanal", url=CHANNEL_URL)])
+    except Exception as e:
+        log.error(f"start_kb: CHANNEL_URL invalid ({CHANNEL_URL}): {e}")
+    try:
+        buttons.append([InlineKeyboardButton(text="🆘 Yordam", url=SUPPORT_URL)])
+    except Exception as e:
+        log.error(f"start_kb: SUPPORT_URL invalid ({SUPPORT_URL}): {e}")
+    return InlineKeyboardMarkup(inline_keyboard=buttons) if buttons else None
 
 
 def admin_menu_kb():
@@ -786,6 +971,7 @@ def admin_menu_kb():
         [InlineKeyboardButton(text="💸 Pul tashlash (+/-)", callback_data="adm_addbalance")],
         [InlineKeyboardButton(text="🔌 HyperPin holatini tekshirish", callback_data="adm_hpcheck")],
         [InlineKeyboardButton(text="🖼 Tugma belgilarini boshqarish", callback_data="adm_icons")],
+        [InlineKeyboardButton(text="🎵 Fon musiqasini yuklash", callback_data="adm_music")],
     ])
 
 
@@ -798,19 +984,26 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, command: CommandObject = None):
-    get_or_create_user(message.from_user.id, message.from_user.username, message.from_user.full_name)
+    referred_by = None
+    if command and command.args and command.args.startswith("ref"):
+        try:
+            referred_by = int(command.args[3:])
+        except ValueError:
+            referred_by = None
+    get_or_create_user(message.from_user.id, message.from_user.username, message.from_user.full_name, referred_by)
     text = (f"Xush kelibsiz, {message.from_user.first_name}! 👋✌🏻\n\n"
             "Bu yerda siz sevimli o'yinlaringiz uchun UC, Prime va boshqa xizmatlarni "
             "eng tez va eng arzon narxlarda sotib olishingiz mumkin.\n\n"
             "Boshlash uchun pastdagi tugmalardan foydalaning 👇")
     image = get_setting("start_image") or START_IMAGE
+    kb = start_kb()
     if image:
         try:
-            await message.answer_photo(image, caption=text, reply_markup=start_kb())
+            await message.answer_photo(image, caption=text, reply_markup=kb)
             return
-        except Exception:
-            pass
-    await message.answer(text, reply_markup=start_kb())
+        except Exception as e:
+            log.error(f"cmd_start: failed to send photo ({image}): {e}")
+    await message.answer(text, reply_markup=kb)
 
 
 @router.message(Command("admin"))
@@ -902,12 +1095,20 @@ async def adm_newgame_start(call: CallbackQuery, state: FSMContext):
 async def adm_newgame_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
     await state.set_state(AdminStates.waiting_new_game_image)
-    await message.answer("🖼 Endi o'yin uchun rasm yuboring:", reply_markup=cancel_kb())
+    await message.answer(
+        "🖼 Endi o'yin uchun rasm yuboring.\n"
+        "Tavsiya: kvadratga yaqin (masalan 512x512) PNG, fon bir xil rangda bo'lsa "
+        "(oq/qora/boshqa) — fon avtomatik tozalanadi.",
+        reply_markup=cancel_kb(),
+    )
 
 
 @router.message(AdminStates.waiting_new_game_image, F.photo)
 async def adm_newgame_image(message: Message, state: FSMContext):
-    await state.update_data(image=message.photo[-1].file_id)
+    processing_msg = await message.answer("⏳ Rasm qayta ishlanmoqda (fon tozalanmoqda)...")
+    local_ref = download_and_debg(message.photo[-1].file_id, prefix="game")
+    await state.update_data(image=local_ref)
+    await processing_msg.delete()
     await state.set_state(AdminStates.waiting_new_game_hyperpin)
     await message.answer(
         "🔌 Bu o'yin HyperPin orqali avtomatik yuklab berilsinmi?\n\n"
@@ -1063,7 +1264,8 @@ async def adm_icon_pick(call: CallbackQuery, state: FSMContext):
     ])
     await call.message.edit_text(
         f"🖼 <b>{label}</b>\nStandart: {default_emoji}\n\n"
-        "Yangi belgi uchun bitta emoji yuboring (masalan 🔥) YOKI rasm (PNG/JPG) yuboring.",
+        "Yangi belgi uchun bitta emoji yuboring (masalan 🔥) YOKI rasm (PNG) yuboring.\n"
+        "Tavsiya: kvadrat (masalan 128x128), fon bir xil rangda bo'lsin — fon avtomatik tozalanadi.",
         reply_markup=kb, parse_mode="HTML",
     )
     await call.answer()
@@ -1086,9 +1288,12 @@ async def adm_icon_set_image(message: Message, state: FSMContext):
     slot = data.get("icon_slot")
     if not slot:
         await state.clear(); return
-    set_icon(slot, "image", message.photo[-1].file_id)
+    processing_msg = await message.answer("⏳ Rasm qayta ishlanmoqda (fon tozalanmoqda)...")
+    local_ref = download_and_debg(message.photo[-1].file_id, prefix=f"icon_{slot}")
+    set_icon(slot, "image", local_ref)
+    await processing_msg.delete()
     await state.clear()
-    await message.answer("✅ Belgi rasm bilan yangilandi.", reply_markup=admin_menu_kb())
+    await message.answer("✅ Belgi rasm bilan yangilandi (fon avtomatik tozalandi).", reply_markup=admin_menu_kb())
 
 
 @router.message(AdminStates.waiting_icon_value, F.text)
@@ -1104,6 +1309,59 @@ async def adm_icon_set_emoji(message: Message, state: FSMContext):
     set_icon(slot, "emoji", value)
     await state.clear()
     await message.answer(f"✅ Belgi {value} bilan yangilandi.", reply_markup=admin_menu_kb())
+
+
+@router.callback_query(F.data == "adm_music")
+async def adm_music_start(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    await state.set_state(AdminStates.waiting_music)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔇 Musiqani o'chirish", callback_data="adm_music_off")],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data="adm_cancel")],
+    ])
+    await call.message.edit_text(
+        "🎵 Fon musiqasi uchun audio fayl yuboring (mp3, maksimum 3 daqiqa).\n"
+        "Foydalanuvchi ilovani ochib birinchi marta biror joyga bossa, musiqa avtomatik yoqiladi "
+        "(brauzer qoidasiga ko'ra ovozli audio faqat foydalanuvchi harakatidan keyin ishga tushadi).",
+        reply_markup=kb,
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data == "adm_music_off")
+async def adm_music_off(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("Ruhsat yo'q", show_alert=True); return
+    conn = get_conn()
+    conn.execute("DELETE FROM settings WHERE key='bg_music'")
+    conn.commit(); conn.close()
+    await state.clear()
+    await call.message.edit_text("🔇 Fon musiqasi o'chirildi.", reply_markup=admin_menu_kb())
+    await call.answer()
+
+
+@router.message(AdminStates.waiting_music, F.audio)
+async def adm_music_set(message: Message, state: FSMContext):
+    if message.audio.duration and message.audio.duration > 190:
+        await message.answer("❌ Audio 3 daqiqadan uzun bo'lmasin. Qisqaroq fayl yuboring.")
+        return
+    processing_msg = await message.answer("⏳ Yuklanmoqda...")
+    try:
+        r = requests.get(f"{TG_API}/getFile", params={"file_id": message.audio.file_id}, timeout=20)
+        file_path = r.json()["result"]["file_path"]
+        audio_resp = requests.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}", timeout=30)
+        filename = "bgmusic.mp3"
+        with open(os.path.join(UPLOADS_DIR, filename), "wb") as f:
+            f.write(audio_resp.content)
+        set_setting("bg_music", f"local:{filename}")
+        await processing_msg.delete()
+        await state.clear()
+        await message.answer("✅ Fon musiqasi o'rnatildi.", reply_markup=admin_menu_kb())
+    except Exception as e:
+        log.error(f"adm_music_set failed: {e}")
+        await processing_msg.delete()
+        await message.answer("❌ Yuklashda xatolik yuz berdi, qayta urinib ko'ring.")
 
 
 @router.callback_query(F.data == "adm_addbalance")
@@ -1199,6 +1457,29 @@ async def topup_reject(call: CallbackQuery, bot: Bot):
     except Exception:
         pass
     await call.answer("Rad etildi ❌")
+
+
+@router.callback_query(F.data.startswith("rate_"))
+async def on_rate_order(call: CallbackQuery, state: FSMContext):
+    _, oid, stars = call.data.split("_")
+    await state.set_state(UserStates.waiting_review_text)
+    await state.update_data(review_order_id=int(oid), review_stars=int(stars))
+    await call.message.edit_text(call.message.text + f"\n\nBahoyingiz: {'⭐' * int(stars)}")
+    await call.message.answer("✍️ Endi fikringizni matn qilib yozib yuboring (masalan: \"Tez va sifatli xizmat!\")")
+    await call.answer()
+
+
+@router.message(UserStates.waiting_review_text, F.text)
+async def on_review_text(message: Message, state: FSMContext):
+    data = await state.get_data()
+    stars = data.get("review_stars", 5)
+    text = message.text.strip()
+    if not text:
+        await message.answer("❌ Bo'sh xabar. Iltimos fikringizni yozing.")
+        return
+    add_review(message.from_user.id, text, stars)
+    await state.clear()
+    await message.answer(f"✅ Rahmat! Fikringiz ({'⭐' * stars}) ilovaga qo'shildi.")
 
 
 async def run_bot():
