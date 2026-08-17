@@ -1,12 +1,9 @@
-<!-- ============================================================================
-     INDEX.HTML (Neon Design + Complete Frontend JS)
-     ============================================================================ -->
 <!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mini App</title>
+<title>Yopish</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
@@ -47,6 +44,7 @@ a{text-decoration:none;color:inherit;}
 
 #app{padding-bottom:88px;min-height:100vh;}
 
+/* ---------- topbar ---------- */
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 16px 6px;
@@ -56,27 +54,36 @@ a{text-decoration:none;color:inherit;}
 .hello-line{font-size:13px;color:var(--text-dim);}
 .hello-name{font-size:16px;font-weight:700;font-style:italic;}
 .topbar-right{display:flex;align-items:center;gap:8px;}
+.pill-btn{
+  background:var(--gray-btn);color:var(--gray-btn-text);
+  padding:8px 14px;border-radius:20px;font-weight:700;font-size:13px;
+}
 .icon-btn{
   background:var(--gray-btn);color:var(--gray-btn-text);
   width:36px;height:36px;border-radius:50%;font-size:16px;
   display:flex;align-items:center;justify-content:center;
 }
 .icon-circle-sm{padding:0;overflow:hidden;}
-.icon-slot{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
-.icon-slot img{width:100%;height:100%;object-fit:contain;border-radius:4px;}
+.icon-slot{display:inline-flex;align-items:center;justify-content:center;line-height:1;color:var(--text);}
+.icon-slot img{width:100%;height:100%;object-fit:contain;border-radius:6px;}
 .icon-inline{width:20px;height:20px;font-size:17px;vertical-align:-4px;margin-right:3px;}
 .round-action-icon .icon-slot{width:65%;height:65%;font-size:26px;}
 .round-action-icon.small .icon-slot{font-size:20px;}
 .icon-btn .icon-slot{width:22px;height:22px;font-size:18px;}
-.nav-ic .icon-slot{font-size:21px;opacity:.75;}
-.nav-btn.active .icon-slot{opacity:1;}
+.nav-ic .icon-slot{font-size:21px;opacity:.75;transition:transform .2s ease;}
+.nav-btn.active .icon-slot{opacity:1;animation:iconBounce .4s ease;}
 .page-title .icon-slot{font-size:22px;vertical-align:-3px;}
+@keyframes iconBounce{0%{transform:scale(1);}40%{transform:scale(1.25);}100%{transform:scale(1);}}
+.icon-slot img{animation:iconFadeIn .3s ease;}
+@keyframes iconFadeIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
 
+/* ---------- views ---------- */
 .view{padding:14px 16px 6px;}
 .hidden{display:none !important;}
 .page-title{font-size:22px;font-weight:800;margin:6px 0 16px;}
 .sub-title{font-size:14px;color:var(--text-dim);margin:14px 0 8px;font-weight:600;}
 
+/* ---------- balance card ---------- */
 .balance-card{
   background:linear-gradient(135deg,var(--card),var(--card-2));
   border-radius:var(--radius);
@@ -108,12 +115,14 @@ a{text-decoration:none;color:inherit;}
 }
 .btn-confirm.full{width:100%;}
 
+/* ---------- quick actions ---------- */
 .quick-actions{display:flex;gap:10px;margin-bottom:14px;}
 .quick-btn{
   flex:1;background:var(--gray-btn);color:var(--gray-btn-text);
   text-align:center;padding:14px;border-radius:14px;font-weight:700;font-size:14px;
 }
 
+/* ---------- banners ---------- */
 .banner-wrap{margin:6px 0 18px;cursor:pointer;}
 .banner-track{
   width:100%;aspect-ratio:16/8.2;border-radius:var(--radius);overflow:hidden;
@@ -137,10 +146,12 @@ a{text-decoration:none;color:inherit;}
 .banner-dots span{width:6px;height:6px;border-radius:50%;background:var(--gray-btn);}
 .banner-dots span.active{background:var(--accent);width:16px;border-radius:4px;}
 
+/* ---------- section head ---------- */
 .section-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 10px;}
 .section-head h2{font-size:17px;margin:0;}
 .link-btn{background:none;color:var(--accent);font-weight:700;font-size:13px;}
 
+/* ---------- games grid ---------- */
 .games-grid{
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;
 }
@@ -151,7 +162,9 @@ a{text-decoration:none;color:inherit;}
   transition:transform .15s ease;
 }
 .game-item:active .game-thumb-wrap{transform:scale(.94);}
-.game-thumb{width:100%;height:100%;object-fit:cover;display:block;}
+.game-thumb{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
 .game-thumb-fallback{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:30px;
@@ -165,6 +178,7 @@ a{text-decoration:none;color:inherit;}
 .game-name{font-size:11px;text-align:center;color:var(--text-dim);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;}
 
+/* ---------- reviews ---------- */
 .reviews-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px;}
 .review-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;}
 .review-name{font-weight:700;font-size:13px;margin-bottom:4px;}
@@ -172,6 +186,7 @@ a{text-decoration:none;color:inherit;}
 .review-stars{color:#facc15;font-size:12px;margin-top:4px;}
 .empty-note{color:var(--text-dim);font-size:13px;padding:8px 2px;}
 
+/* ---------- leaderboard ---------- */
 .leaderboard{display:flex;flex-direction:column;gap:10px;}
 .lb-item{
   background:var(--card);border-radius:var(--radius-sm);
@@ -185,6 +200,7 @@ a{text-decoration:none;color:inherit;}
 .lb-meta{font-size:12px;color:var(--text-dim);}
 .lb-amount{color:var(--accent);font-weight:800;font-size:13px;white-space:nowrap;}
 
+/* ---------- topup ---------- */
 .methods-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
 .method-card{
   background:var(--gray-btn);color:var(--text);border-radius:14px;
@@ -223,17 +239,26 @@ a{text-decoration:none;color:inherit;}
 .rule{font-size:13px;padding:5px 0;}
 .rule.bad{color:var(--red);}
 
+/* ---------- orders ---------- */
 .orders-list{display:flex;flex-direction:column;gap:10px;}
 .order-item{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
 .order-game{font-weight:700;font-size:14px;}
 .order-meta{font-size:12px;color:var(--text-dim);margin-top:2px;}
 .order-price{font-weight:800;color:var(--accent);font-size:14px;}
 
+/* ---------- profile ---------- */
 .profile-hero{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
 .avatar-big{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--card-2);margin-bottom:10px;}
 .profile-name{font-weight:800;font-size:18px;}
 .profile-id{font-size:12px;color:var(--text-dim);}
+.row-card{
+  width:100%;background:var(--card);border-radius:var(--radius-sm);
+  padding:16px;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;font-size:14px;font-weight:600;
+}
+.chevron{color:var(--text-dim);}
 
+/* ---------- round action buttons (profile) ---------- */
 .round-actions-row{display:flex;gap:12px;margin:14px 0;}
 .round-action{
   flex:1;background:var(--card);border-radius:26px;padding:20px 10px;
@@ -257,6 +282,7 @@ a{text-decoration:none;color:inherit;}
   50%{box-shadow:0 0 24px 6px rgba(139,92,246,.7),0 6px 20px rgba(139,92,246,.45);}
 }
 
+/* ---------- settings row (til / mavzu / support) — pill shaped ---------- */
 .settings-row{display:flex;flex-direction:column;gap:10px;margin:10px 0;}
 .settings-item{
   width:100%;background:var(--card);border-radius:999px;padding:12px 20px;
@@ -267,11 +293,17 @@ a{text-decoration:none;color:inherit;}
 #themeIconWrap{transition:transform .35s ease;font-size:18px;display:flex;align-items:center;justify-content:center;}
 #themeIconWrap.spin{transform:rotate(360deg);}
 
+/* ---------- admin section ---------- */
+.admin-section{margin-top:6px;}
+
+/* ---------- footer ---------- */
 .app-footer{
   text-align:center;color:var(--text-dim);font-size:11px;font-weight:600;
   margin:22px 0 8px;line-height:1.8;
 }
+.app-footer .icon-img-inline{opacity:.7;}
 
+/* ---------- overlays / bottom sheets ---------- */
 .overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.55);
   display:flex;align-items:flex-end;z-index:50;
@@ -311,6 +343,7 @@ a{text-decoration:none;color:inherit;}
 .star-pick{font-size:28px;opacity:.3;filter:grayscale(1);cursor:pointer;transition:opacity .15s,filter .15s,transform .15s;}
 .star-pick.active{opacity:1;filter:none;transform:scale(1.1);}
 
+/* ---------- bottom nav ---------- */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;
   background:var(--card);border-top:1px solid rgba(255,255,255,.04);
@@ -324,6 +357,7 @@ a{text-decoration:none;color:inherit;}
 .nav-ic{font-size:19px;}
 .nav-btn.active{color:var(--accent);background:rgba(139,92,246,.12);}
 
+/* ---------- referral overlay ---------- */
 .ref-desc{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:14px;}
 .ref-code-box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;text-align:center;}
 .ref-stats-row{display:flex;gap:10px;margin-top:14px;}
@@ -335,13 +369,14 @@ a{text-decoration:none;color:inherit;}
   background:var(--card-2);color:var(--text);padding:10px 18px;border-radius:12px;
   font-size:13px;font-weight:600;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.3);
 }
+
 </style>
 </head>
 <body>
 
 <div id="app">
 
-  <!-- HEADER -->
+  <!-- ===================== HEADER ===================== -->
   <header class="topbar">
     <div class="topbar-left" id="openProfile">
       <img id="avatar" class="avatar" src="" alt="">
@@ -356,7 +391,7 @@ a{text-decoration:none;color:inherit;}
     </div>
   </header>
 
-  <!-- HOME VIEW -->
+  <!-- ===================== HOME VIEW ===================== -->
   <main class="view" id="view-home">
 
     <section class="balance-card">
@@ -364,7 +399,7 @@ a{text-decoration:none;color:inherit;}
         <div class="balance-label"><span class="icon-slot icon-inline" data-slot="balance">💼</span> <span data-i18n="balance_label">BALANS</span></div>
         <div class="balance-amount"><span id="balanceValue">0</span> <span class="sum">so'm</span></div>
       </div>
-      <button class="btn-primary" id="topupBtnHome">➕ <span data-i18n="topup_btn">To'ldirish</span></button>
+      <button class="btn-primary" id="topupBtnHome"><span class="icon-slot" data-slot="topup_plus">➕</span> <span data-i18n="topup_btn">To'ldirish</span></button>
     </section>
 
     <section class="quick-actions">
@@ -391,13 +426,13 @@ a{text-decoration:none;color:inherit;}
 
   </main>
 
-  <!-- TOP VIEW -->
+  <!-- ===================== TOP VIEW ===================== -->
   <main class="view hidden" id="view-top">
     <h1 class="page-title"><span class="icon-slot" data-slot="top_header">🏆</span> <span data-i18n="top_title">TOP Xaridorlar</span></h1>
     <div class="leaderboard" id="leaderboardList"></div>
   </main>
 
-  <!-- HISOB VIEW -->
+  <!-- ===================== HISOB (TOPUP) VIEW ===================== -->
   <main class="view hidden" id="view-hisob">
 
     <div id="hisob-step-methods">
@@ -445,7 +480,7 @@ a{text-decoration:none;color:inherit;}
           <span class="badge" id="cardBank">UZCARD</span>
           <span id="cardHolder"></span>
         </div>
-        <button class="btn-secondary full" id="copyCardBtn">📋 <span data-i18n="copy_btn">Nusxa olish</span></button>
+        <button class="btn-secondary full" id="copyCardBtn"><span class="icon-slot" data-slot="copy_card">📋</span> <span data-i18n="copy_btn">Nusxa olish</span></button>
       </div>
 
       <div class="rules-box">
@@ -454,179 +489,170 @@ a{text-decoration:none;color:inherit;}
         <div class="rule bad">❌ <span data-i18n="rule3">Boshqa summa yubormang</span></div>
       </div>
 
-      <button class="btn-confirm full" id="confirmPaidBtn">✅ <span data-i18n="confirm_paid_btn">To'lovni amalga oshirdim</span></button>
+      <button class="btn-confirm full" id="confirmPaidBtn"><span class="icon-slot" data-slot="confirm_paid">✅</span> <span data-i18n="confirm_paid_btn">To'lovni amalga oshirdim</span></button>
     </div>
 
   </main>
 
-  <!-- ORDERS VIEW -->
+  <!-- ===================== BUYURTMALAR VIEW ===================== -->
   <main class="view hidden" id="view-orders">
-    <h1 class="page-title"><span class="icon-slot" data-slot="orders_header">🧾</span> <span data-i18n="orders_title">Mening buyurtmalarim</span></h1>
+    <h1 class="page-title"><span class="icon-slot" data-slot="orders_header">🧾</span> <span data-i18n="orders_title">Buyurtmalarim</span></h1>
     <div class="orders-list" id="ordersList"></div>
   </main>
 
-  <!-- PROFILE VIEW -->
+  <!-- ===================== PROFIL VIEW ===================== -->
   <main class="view hidden" id="view-profile">
     <div class="profile-hero">
-      <img id="profileAvatar" class="avatar-big" src="" alt="">
+      <img id="avatarBig" class="avatar-big" src="" alt="">
       <div class="profile-name" id="profileName">...</div>
-      <div class="profile-id">ID: <span id="profileTgId">-</span></div>
+      <div class="profile-id" id="profileId">ID: -</div>
+    </div>
+
+    <div class="balance-card small">
+      <div class="balance-info">
+        <div class="balance-label"><span class="icon-slot icon-inline" data-slot="balance">💼</span> <span data-i18n="balance_label">BALANS</span></div>
+        <div class="balance-amount"><span id="balanceValue3">0</span> <span class="sum">so'm</span></div>
+      </div>
+      <button class="btn-primary" id="topupBtnProfile"><span class="icon-slot" data-slot="topup_plus">➕</span> <span data-i18n="topup_btn">To'ldirish</span></button>
     </div>
 
     <div class="round-actions-row">
-      <button class="round-action" id="openReferralBtn">
-        <div class="round-action-icon"><span class="icon-slot" data-slot="invite">🤝</span></div>
-        <div class="round-action-label" data-i18n="invite_friends">Do'st taklif qilish</div>
+      <button class="round-action" id="inviteBtn">
+        <span class="round-action-icon"><span class="icon-slot" data-slot="invite">🤝</span></span>
+        <span class="round-action-label" data-i18n="invite_label">Do'st taklif qilish</span>
       </button>
-      <button class="round-action" id="openTopBtn">
-        <div class="round-action-icon"><span class="icon-slot" data-slot="topdonor">🏅</span></div>
-        <div class="round-action-label" data-i18n="top_donors">Top donatlar</div>
+      <button class="round-action" id="topDonatersBtn">
+        <span class="round-action-icon"><span class="icon-slot" data-slot="topdonor">🏅</span></span>
+        <span class="round-action-label" data-i18n="top_donors_label">Top donatlar</span>
       </button>
     </div>
 
     <div class="settings-row">
-      <button class="settings-item" id="langSettingBtn">
-        <span class="icon-slot icon-inline" data-slot="til">🌐</span>
-        <span>Til (Uzbek)</span>
+      <button class="settings-item" id="langBtn2">
+        <span class="round-action-icon small"><span class="icon-slot" data-slot="til">🌐</span></span>
+        <span data-i18n="settings_lang">Til</span>
       </button>
-      <button class="settings-item" id="themeSettingBtn">
-        <span id="themeIconWrap">🌙</span>
-        <span>Mavzu (Tungi)</span>
+      <button class="settings-item" id="themeBtn2">
+        <span class="round-action-icon small" id="themeIconWrap"><span id="themeEmoji">🌙</span></span>
+        <span data-i18n="settings_theme">Mavzu</span>
       </button>
-      <a class="settings-item" id="profileSupportBtn" href="#">
-        <span class="icon-slot icon-inline" data-slot="support2">🆘</span>
-        <span data-i18n="support_btn">Yordam</span>
+      <a class="settings-item" id="supportBtn2" href="https://t.me/x7fan">
+        <span class="round-action-icon small"><span class="icon-slot" data-slot="support2">🆘</span></span>
+        <span data-i18n="settings_support">Support</span>
       </a>
     </div>
 
-    <div id="adminPanelSection" class="admin-section hidden">
-      <h3 class="sub-title">🛠 Admin Boshqaruvi</h3>
-      <button class="btn-secondary full" id="adminClearReviewsBtn">🧹 Barcha izohlarni tozalash</button>
+    <div class="admin-section hidden" id="adminSection">
+      <h3 class="sub-title">Admin</h3>
+      <div class="settings-row">
+        <button class="settings-item" id="clearReviewsBtn">
+          <span class="round-action-icon small"><span class="icon-slot" data-slot="admin_clear">🧹</span></span>
+          <span data-i18n="admin_clear_reviews">Izohlarni tozalash</span>
+        </button>
+        <button class="settings-item" id="openAdminPanelBtn">
+          <span class="round-action-icon small"><span class="icon-slot" data-slot="admin_panel">🛡️</span></span>
+          <span data-i18n="admin_panel_btn">Admin panel</span>
+        </button>
+      </div>
     </div>
 
     <div class="app-footer">
-      <div>Bot Version <span id="appVersion">1.01</span></div>
-      <div>App Owner <span id="appOwner">@x7fan</span></div>
+      <span class="icon-slot" data-slot="footer_app">📱</span>
+      <span data-i18n="app_label">Ilova</span> <span id="appVersion">1.01</span> <span data-i18n="version_label">versiya</span>
+      <br>
+      <span data-i18n="owner_label">Owner</span>: <span id="appOwner">@x7fan</span>
     </div>
   </main>
 
-</div>
-
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-view="home">
-    <span class="nav-ic">🏠</span>
-    <span data-i18n="nav_home">Asosiy</span>
-  </button>
-  <button class="nav-btn" data-view="top">
-    <span class="nav-ic"><span class="icon-slot" data-slot="nav_top">🏆</span></span>
-    <span data-i18n="nav_top">Top</span>
-  </button>
-  <button class="nav-btn" data-view="hisob">
-    <span class="nav-ic"><span class="icon-slot" data-slot="nav_hisob">💳</span></span>
-    <span data-i18n="nav_hisob">Hisob</span>
-  </button>
-  <button class="nav-btn" data-view="orders">
-    <span class="nav-ic"><span class="icon-slot" data-slot="nav_orders">🧾</span></span>
-    <span data-i18n="nav_orders">Buyurtmalar</span>
-  </button>
-  <button class="nav-btn" data-view="profile">
-    <span class="nav-ic"><span class="icon-slot" data-slot="nav_profile">👤</span></span>
-    <span data-i18n="nav_profile">Profil</span>
-  </button>
-</nav>
-
-<!-- GAME BUY SHEET -->
-<div class="overlay hidden" id="gameSheet">
-  <div class="sheet">
-    <div class="sheet-header">
-      <span id="sheetGameName">O'yin</span>
-    </div>
-    <div class="game-banner-wrap">
-      <img id="sheetGameImage" class="game-banner" src="" alt="">
-      <div id="sheetGameImageFallback" class="game-banner-fallback hidden">🎮</div>
-    </div>
-
-    <div id="playerIdWrap" class="hidden">
-      <div class="player-id-box">
-        <input type="text" id="playerIdInput" class="player-id-input" placeholder="Player ID kiriting...">
-        <button class="btn-secondary" id="checkPlayerIdBtn">Tekshirish</button>
+  <!-- ===================== GAME DETAIL (overlay) ===================== -->
+  <div class="overlay hidden" id="gameOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeGameOverlay">✕</button>
+        <span id="gameOverlayTitle">O'yin</span>
+      </div>
+      <div class="game-banner-wrap">
+        <img id="gameOverlayImg" class="game-banner" src="" alt="">
+        <div id="gameOverlayFallback" class="game-banner game-banner-fallback hidden"></div>
+      </div>
+      <div id="playerIdBox" class="player-id-box hidden">
+        <input type="text" id="playerIdInput" class="player-id-input" placeholder="O'yinchi ID raqamini kiriting">
+        <button class="btn-secondary" id="checkIdBtn">🔎 Tekshirish</button>
       </div>
       <div id="playerIdResult" class="player-id-result hidden"></div>
+      <div class="packages-grid" id="packagesGrid"></div>
+      <button class="btn-primary full hidden" id="buySelectedBtn">Sotib olish</button>
     </div>
-
-    <h3 class="sub-title">Paketni tanlang:</h3>
-    <div class="packages-grid" id="sheetPackages"></div>
-    <button class="btn-primary full" id="confirmBuyBtn" style="margin-top:16px;">Sotib olish</button>
-    <button class="btn-secondary full" id="closeSheetBtn">Yopish</button>
   </div>
-</div>
 
-<!-- REVIEW SHEET -->
-<div class="overlay hidden" id="reviewSheet">
-  <div class="sheet">
-    <div class="sheet-header">✍️ Fikr qoldirish</div>
-    <div class="star-picker" id="starPicker">
-      <span class="star-pick active" data-s="1">⭐</span>
-      <span class="star-pick active" data-s="2">⭐</span>
-      <span class="star-pick active" data-s="3">⭐</span>
-      <span class="star-pick active" data-s="4">⭐</span>
-      <span class="star-pick active" data-s="5">⭐</span>
-    </div>
-    <textarea id="reviewText" rows="4" placeholder="Xizmatimiz haqida fikringizni yozing..."></textarea>
-    <button class="btn-primary full" id="submitReviewBtn">Yuborish</button>
-    <button class="btn-secondary full" id="closeReviewSheetBtn">Yopish</button>
-  </div>
-</div>
-
-<!-- REFERRAL SHEET -->
-<div class="overlay hidden" id="referralSheet">
-  <div class="sheet">
-    <div class="sheet-header">🤝 Do'stlarni taklif qilish</div>
-    <div class="ref-desc">
-      Har bir taklif qilgan do'stingiz uchun sizga <b id="refSignupBonus">200</b> so'm bonus va uning barcha xaridlaridan <b id="refCommissionPercent">0.05</b>% uzluksiz komissiya beriladi!
-    </div>
-    <div class="ref-code-box">
-      <div class="card-label">Sizning referal havolangiz</div>
-      <div class="card-number" id="refLinkText" style="font-size:14px;word-break:break-all;">-</div>
-      <button class="btn-secondary full" id="copyRefBtn">📋 Nusxa olish</button>
-    </div>
-    <div class="ref-stats-row">
-      <div class="ref-stat">
-        <div class="ref-stat-value" id="refInvited">0</div>
-        <div class="ref-stat-label">Taklif etilganlar</div>
+  <!-- ===================== REFERRAL OVERLAY ===================== -->
+  <div class="overlay hidden" id="referralOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeReferralOverlay">✕</button>
+        <span>🤝 Do'stlarni taklif qiling</span>
       </div>
-      <div class="ref-stat">
-        <div class="ref-stat-value" id="refEarned">0</div>
-        <div class="ref-stat-label">Jami ishlangan (so'm)</div>
+      <p class="ref-desc">Do'stingiz sizning havolangiz orqali botga kirsa, sizga darhol <b id="refBonusAmt">200</b> so'm bonus tushadi. Bundan tashqari, u xarid qilganda ham sizga har safar <b id="refCommissionPct">0.05%</b> komissiya tushib turadi!</p>
+
+      <div class="ref-code-box">
+        <div class="card-label">Sizning referal kodingiz</div>
+        <div class="card-number" id="refCode">-</div>
+        <button class="btn-secondary full" id="copyRefLinkBtn">📋 Havolani nusxalash</button>
+      </div>
+
+      <button class="btn-primary full" id="shareRefLinkBtn">📤 Do'stlarga ulashish</button>
+
+      <div class="ref-stats-row">
+        <div class="ref-stat">
+          <div class="ref-stat-value" id="refInvitedCount">0</div>
+          <div class="ref-stat-label">Taklif qilingan</div>
+        </div>
+        <div class="ref-stat">
+          <div class="ref-stat-value" id="refEarnedAmt">0</div>
+          <div class="ref-stat-label">Ishlab topilgan (so'm)</div>
+        </div>
       </div>
     </div>
-    <button class="btn-secondary full" id="closeRefSheetBtn" style="margin-top:14px;">Yopish</button>
   </div>
+
+  <!-- ===================== REVIEW OVERLAY ===================== -->
+  <div class="overlay hidden" id="reviewOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeReviewOverlay">✕</button>
+        <span data-i18n="review_overlay_title">Fikr qoldirish</span>
+      </div>
+      <div class="star-picker" id="starPicker">
+        <span class="star-pick" data-star="1">⭐</span>
+        <span class="star-pick" data-star="2">⭐</span>
+        <span class="star-pick" data-star="3">⭐</span>
+        <span class="star-pick" data-star="4">⭐</span>
+        <span class="star-pick" data-star="5">⭐</span>
+      </div>
+      <textarea id="reviewText" data-i18n-placeholder="review_placeholder" placeholder="Fikringizni yozing..." rows="4"></textarea>
+      <button class="btn-primary full" id="submitReviewBtn" data-i18n="send_btn">Yuborish</button>
+    </div>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <div class="toast hidden" id="toast"></div>
+
+  <!-- background music, started only after the first user tap (autoplay policy) -->
+  <audio id="bgMusic" loop preload="none"></audio>
+
+  <!-- ===================== BOTTOM NAV ===================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home"><span class="nav-ic">🏠</span><span data-i18n="nav_home">Asosiy</span></button>
+    <button class="nav-btn" data-view="top"><span class="nav-ic"><span class="icon-slot" data-slot="nav_top">🏆</span></span><span data-i18n="nav_top">Top donater</span></button>
+    <button class="nav-btn" data-view="hisob"><span class="nav-ic"><span class="icon-slot" data-slot="nav_hisob">💳</span></span><span data-i18n="nav_hisob">Hisob</span></button>
+    <button class="nav-btn" data-view="orders"><span class="nav-ic"><span class="icon-slot" data-slot="nav_orders">🧾</span></span><span data-i18n="nav_orders">Buyurtmalar</span></button>
+    <button class="nav-btn" data-view="profile"><span class="nav-ic"><span class="icon-slot" data-slot="nav_profile">👤</span></span><span data-i18n="nav_profile">Profile</span></button>
+  </nav>
+
 </div>
 
 <script>
-const tg = window.Telegram?.WebApp || {};
-if (tg.ready) tg.ready();
-if (tg.expand) tg.expand();
-
-let state = {
-  user: null,
-  games: [],
-  banners: [],
-  reviews: [],
-  icons: {},
-  selectedGame: null,
-  selectedPackageIdx: null,
-  reviewRating: 5,
-  topupMethod: 'UZCARD',
-  topupAmount: 0,
-  payTimerInterval: null,
-  bgAudio: null,
-  audioStarted: false,
-};
-
-const i18n = {
+const I18N = {
   uz: {
     hello: "Salom 👋",
     balance_label: "BALANS",
@@ -637,6 +663,10 @@ const i18n = {
     see_all: "Barchasi",
     reviews_title: "Odamlar fikri",
     leave_review: "Fikr qoldirish",
+    no_games: "Hozircha o'yinlar mavjud emas",
+    no_reviews: "Hali fikrlar yo'q. Birinchi bo'ling!",
+    no_orders: "Buyurtmalar mavjud emas",
+    no_leaders: "Hozircha xaridorlar yo'q",
     top_title: "TOP Xaridorlar",
     topup_title: "Balansni to'ldirish",
     payment_method: "To'lov usuli",
@@ -654,646 +684,868 @@ const i18n = {
     rule2: "Belgilangan vaqtda to'lang",
     rule3: "Boshqa summa yubormang",
     confirm_paid_btn: "To'lovni amalga oshirdim",
-    orders_title: "Mening buyurtmalarim",
-    invite_friends: "Do'st taklif qilish",
-    top_donors: "Top donatlar",
+    orders_title: "Buyurtmalarim",
+    invite_label: "Do'st taklif qilish",
+    top_donors_label: "Top donatlar",
+    settings_lang: "Til",
+    settings_theme: "Mavzu",
+    settings_support: "Support",
+    admin_clear_reviews: "Izohlarni tozalash",
+    admin_panel_btn: "Admin panel",
+    app_label: "Ilova",
+    version_label: "versiya",
+    owner_label: "Owner",
+    review_overlay_title: "Fikr qoldirish",
+    review_placeholder: "Fikringizni yozing...",
+    send_btn: "Yuborish",
     nav_home: "Asosiy",
-    nav_top: "Top",
+    nav_top: "Top donater",
     nav_hisob: "Hisob",
     nav_orders: "Buyurtmalar",
-    nav_profile: "Profil",
+    nav_profile: "Profile",
+    toast_order_ok: "✅ Buyurtma muvaffaqiyatli amalga oshirildi!",
+    toast_insufficient: "❌ Balansingiz yetarli emas. Avval to'ldiring.",
+    toast_error: "❌ Xatolik yuz berdi",
+    toast_min_amount: "Eng kam summa 1 000 so'm",
+    toast_time_up: "⏱ Vaqt tugadi, qaytadan urinib ko'ring",
+    toast_topup_sent: "✅ So'rovingiz qabul qilindi, tez orada tasdiqlanadi",
+    toast_copied: "📋 Nusxalandi",
+    toast_review_thanks: "✅ Rahmat! Fikringiz qo'shildi",
+    toast_reviews_cleared: "🧹 Barcha izohlar tozalandi",
+    toast_forbidden: "Ruhsat yo'q",
+    toast_admin_hint: "Botda /admin deb yozing",
   },
   ru: {
     hello: "Привет 👋",
     balance_label: "БАЛАНС",
     topup_btn: "Пополнить",
     channel_btn: "Канал",
-    support_btn: "Поддержка",
+    support_btn: "Помощь",
     popular_games: "Популярные игры",
     see_all: "Все",
     reviews_title: "Отзывы",
     leave_review: "Оставить отзыв",
-    top_title: "ТОП Покупателей",
+    no_games: "Пока нет игр",
+    no_reviews: "Пока нет отзывов. Будьте первым!",
+    no_orders: "Заказов нет",
+    no_leaders: "Пока нет покупателей",
+    top_title: "ТОП покупателей",
     topup_title: "Пополнение баланса",
     payment_method: "Способ оплаты",
-    min_amount_hint: "Мин. сумма: 1 000 сум",
+    min_amount_hint: "Минимальная сумма: 1 000 сум",
     enter_amount: "Введите сумму",
     continue_btn: "Продолжить",
     back_btn: "Назад",
     payment_title: "Оплата",
     exact_amount_prefix: "Переведите ровно",
     exact_amount_suffix: "сум",
-    card_valid_label: "Карта действительна",
+    card_valid_label: "Карта активна",
     card_number_label: "Номер карты",
     copy_btn: "Копировать",
     rule1: "Не меняйте сумму даже на 1 сум",
     rule2: "Оплатите в указанное время",
     rule3: "Не отправляйте другую сумму",
-    confirm_paid_btn: "Я оплатил",
+    confirm_paid_btn: "Я оплатил(а)",
     orders_title: "Мои заказы",
-    invite_friends: "Пригласить друзей",
-    top_donors: "Топ донаты",
+    invite_label: "Пригласить друга",
+    top_donors_label: "Топ донатеров",
+    settings_lang: "Язык",
+    settings_theme: "Тема",
+    settings_support: "Поддержка",
+    admin_clear_reviews: "Очистить отзывы",
+    admin_panel_btn: "Админ-панель",
+    app_label: "Приложение",
+    version_label: "версия",
+    owner_label: "Владелец",
+    review_overlay_title: "Оставить отзыв",
+    review_placeholder: "Напишите ваш отзыв...",
+    send_btn: "Отправить",
     nav_home: "Главная",
-    nav_top: "Топ",
+    nav_top: "Топ донатер",
     nav_hisob: "Баланс",
     nav_orders: "Заказы",
     nav_profile: "Профиль",
-  }
+    toast_order_ok: "✅ Заказ успешно оформлен!",
+    toast_insufficient: "❌ Недостаточно средств. Сначала пополните баланс.",
+    toast_error: "❌ Произошла ошибка",
+    toast_min_amount: "Минимальная сумма 1 000 сум",
+    toast_time_up: "⏱ Время истекло, попробуйте снова",
+    toast_topup_sent: "✅ Запрос принят, скоро будет подтвержден",
+    toast_copied: "📋 Скопировано",
+    toast_review_thanks: "✅ Спасибо! Ваш отзыв добавлен",
+    toast_reviews_cleared: "🧹 Все отзывы очищены",
+    toast_forbidden: "Нет доступа",
+    toast_admin_hint: "Напишите /admin в боте",
+  },
 };
 
-function getHeaders() {
-  const h = {};
-  if (tg.initData) h['X-Init-Data'] = tg.initData;
-  return h;
+function t(key) {
+  const lang = (STATE.user && STATE.user.lang) || "uz";
+  return (I18N[lang] && I18N[lang][key]) || I18N.uz[key] || key;
 }
 
-function fmt(num) {
-  return (num || 0).toLocaleString('ru-RU').replace(/,/g, ' ');
+function applyI18n() {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
 }
 
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.innerText = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
-}
-
-function tryStartMusic() {
-  if (state.audioStarted || !state.bgAudio) return;
-  state.bgAudio.play().then(() => {
-    state.audioStarted = true;
-  }).catch(() => {});
-}
-
-document.addEventListener('click', tryStartMusic, { once: true });
-document.addEventListener('touchstart', tryStartMusic, { once: true });
-
-async function init() {
+async function applyIconSlots() {
+  // Every icon slot already shows a hard-coded emoji by default (works with
+  // zero JS/network dependency). This only *upgrades* a slot if the admin
+  // configured a custom emoji or image. Failure here never breaks the
+  // app — the emoji fallback baked into the HTML stays visible.
   try {
-    const res = await fetch('/api/init', { headers: getHeaders() });
-    if (!res.ok) throw new Error('Auth failed');
-    state.user = await res.json();
-    applyTheme(state.user.theme || 'dark');
-    applyLang(state.user.lang || 'uz');
-    renderUser();
-
-    loadIcons();
-    loadGames();
-    loadBanners();
-    loadReviews();
-    loadMusic();
+    const icons = await api("/api/icons");
+    Object.keys(icons).forEach(slot => {
+      const data = icons[slot];
+      if (!data || !data.value) return;
+      document.querySelectorAll(`.icon-slot[data-slot="${slot}"]`).forEach(el => {
+        if (data.type === "image") {
+          el.innerHTML = `<img src="${data.value}" alt="">`;
+        } else if (data.type === "emoji") {
+          el.textContent = data.value;
+        }
+      });
+    });
   } catch (e) {
-    console.error(e);
+    // network/API not ready yet — emoji defaults already visible, nothing to do
   }
 }
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 
-async function loadIcons() {
+const INIT_DATA = tg ? tg.initData : "";
+// only used for local testing outside Telegram, harmless otherwise
+const DEBUG_ID = new URLSearchParams(location.search).get("debug_id") || "";
+
+let STATE = {
+  user: null,
+  games: [],
+  currentGame: null,
+  botUsername: "",
+};
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (INIT_DATA) headers["X-Init-Data"] = INIT_DATA;
+  if (!INIT_DATA && DEBUG_ID) headers["X-Debug-Id"] = DEBUG_ID;
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  if (!res.ok) {
+    let e; try { e = await res.json(); } catch { e = {}; }
+    throw Object.assign(new Error(e.error || "request_failed"), { status: res.status, data: e });
+  }
+  return res.json();
+}
+
+function fmt(n) {
+  return (n || 0).toLocaleString("fr-FR").replace(/,/g, " ");
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.add("hidden"), 2200);
+}
+
+/* ============================== INIT ============================== */
+
+async function boot() {
+  // 1) Bind all button clicks FIRST, synchronously — the app must be
+  //    interactive even if every network call below fails.
+  bindEvents();
+  applyIconSlots();
+  applyI18n();
+
+  // 2) Load user/session data (non-fatal if it fails).
   try {
-    const res = await fetch('/api/icons');
-    state.icons = await res.json();
-    renderIcons();
-  } catch(e){}
+    const data = await api("/api/init");
+    STATE.user = data;
+    applyUser(data);
+  } catch (e) {
+    toast("Ulanishda xatolik. Internetni tekshiring.");
+  }
+
+  // 3) Load each content block independently — one failing must never
+  //    block the others or leave the app inert.
+  await safeLoad(loadGames);
+  await safeLoad(loadBanners);
+  await safeLoad(loadReviews);
+  await safeLoad(initMusic);
+  if (STATE.user && STATE.user.app_bg) applyAppBackground(STATE.user.app_bg);
+  applyIconSlots();
+
+  startLivePolling();
 }
 
-function renderIcons() {
-  document.querySelectorAll('[data-slot]').forEach(el => {
-    const slot = el.getAttribute('data-slot');
-    const ic = state.icons[slot];
-    if (!ic) return;
-    if (ic.type === 'image') {
-      el.innerHTML = `<img src="${ic.value}" alt="">`;
-    } else {
-      el.innerText = ic.value;
-    }
-  });
-}
-
-async function loadMusic() {
+async function safeLoad(fn) {
   try {
-    const res = await fetch('/api/music');
-    const data = await res.json();
-    if (data.url) {
-      state.bgAudio = new Audio(data.url);
-      state.bgAudio.loop = true;
-      state.bgAudio.volume = 0.5;
-    }
-  } catch(e){}
-}
-
-function applyTheme(t) {
-  state.user.theme = t;
-  if (t === 'light') {
-    document.body.classList.add('light');
-    document.getElementById('themeBtn').innerText = '☀️';
-  } else {
-    document.body.classList.remove('light');
-    document.getElementById('themeBtn').innerText = '🌙';
+    await fn();
+  } catch (e) {
+    console.error("safeLoad failed:", fn.name, e);
   }
 }
 
-function applyLang(lang) {
-  state.user.lang = lang;
-  const dict = i18n[lang] || i18n.uz;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const k = el.getAttribute('data-i18n');
-    if (dict[k]) el.innerText = dict[k];
+window.addEventListener("error", (e) => {
+  console.error("Global error:", e.message);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("Unhandled rejection:", e.reason);
+});
+
+function startLivePolling() {
+  clearInterval(startLivePolling._t);
+  startLivePolling._t = setInterval(async () => {
+    try {
+      const data = await api("/api/init");
+      const balanceChanged = !STATE.user || STATE.user.balance !== data.balance;
+      STATE.user = Object.assign({}, STATE.user, data);
+      if (balanceChanged) applyUser(STATE.user);
+      const activeView = document.querySelector(".nav-btn.active");
+      const viewName = activeView ? activeView.dataset.view : "home";
+      if (viewName === "home") { loadReviews(); }
+      if (viewName === "top") { loadLeaderboard(); }
+      if (viewName === "orders") { loadOrders(); }
+    } catch (e) { /* silent */ }
+  }, 6000);
+}
+
+function applyUser(u) {
+  document.getElementById("userName").textContent = u.full_name || u.username || ("ID " + u.tg_id);
+  document.getElementById("profileName").textContent = u.full_name || u.username || ("ID " + u.tg_id);
+  document.getElementById("profileId").textContent = "ID: " + u.tg_id;
+  ["balanceValue", "balanceValue2", "balanceValue3"].forEach(id => {
+    document.getElementById(id).textContent = fmt(u.balance);
   });
+  document.body.classList.toggle("light", u.theme === "light");
+  const themeIcon = u.theme === "light" ? "☀️" : "🌙";
+  document.getElementById("themeBtn").textContent = themeIcon;
+  const themeEmojiEl = document.getElementById("themeEmoji");
+  if (themeEmojiEl) themeEmojiEl.textContent = themeIcon;
+
+  const photo = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.photo_url : "";
+  const avatarSrc = photo || "https://api.dicebear.com/7.x/identicon/svg?seed=" + u.tg_id;
+  document.getElementById("avatar").src = avatarSrc;
+  document.getElementById("avatarBig").src = avatarSrc;
+
+  document.getElementById("channelBtn").href = u.channel_url;
+  document.getElementById("supportBtn").href = u.support_url;
+  const supportBtn2 = document.getElementById("supportBtn2");
+  if (supportBtn2) supportBtn2.href = u.support_url;
+
+  const appVersionEl = document.getElementById("appVersion");
+  if (appVersionEl && u.app_version) appVersionEl.textContent = u.app_version;
+  const appOwnerEl = document.getElementById("appOwner");
+  if (appOwnerEl && u.app_owner) appOwnerEl.textContent = u.app_owner;
+
+  STATE.botUsername = u.bot_username || STATE.botUsername;
+
+  const adminSection = document.getElementById("adminSection");
+  if (adminSection) adminSection.classList.toggle("hidden", !u.is_admin);
+
+  applyI18n();
 }
 
-function renderUser() {
-  if (!state.user) return;
-  document.getElementById('userName').innerText = state.user.full_name || state.user.username || 'Foydalanuvchi';
-  document.getElementById('balanceValue').innerText = fmt(state.user.balance);
-  document.getElementById('balanceValue2').innerText = fmt(state.user.balance);
-  document.getElementById('profileName').innerText = state.user.full_name || state.user.username || 'Foydalanuvchi';
-  document.getElementById('profileTgId').innerText = state.user.tg_id;
-  document.getElementById('appVersion').innerText = state.user.app_version || '1.01';
-  document.getElementById('appOwner').innerText = state.user.app_owner || '@x7fan';
+/* ============================== NAV ============================== */
 
-  const userAvatar = tg.initDataUnsafe?.user?.photo_url || '';
-  if (userAvatar) {
-    document.getElementById('avatar').src = userAvatar;
-    document.getElementById('profileAvatar').src = userAvatar;
-  } else {
-    document.getElementById('avatar').src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="%238b5cf6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
-    document.getElementById('profileAvatar').src = document.getElementById('avatar').src;
-  }
-
-  if (state.user.channel_url) document.getElementById('channelBtn').href = state.user.channel_url;
-  if (state.user.support_url) {
-    document.getElementById('supportBtn').href = state.user.support_url;
-    document.getElementById('profileSupportBtn').href = state.user.support_url;
-  }
-
-  if (state.user.is_admin) {
-    document.getElementById('adminPanelSection').classList.remove('hidden');
-  }
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  document.getElementById("view-" + name).classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  if (name === "top") loadLeaderboard();
+  if (name === "orders") loadOrders();
+  if (name === "hisob") resetTopupFlow();
 }
 
-async function loadGames() {
-  try {
-    const res = await fetch('/api/games');
-    state.games = await res.json();
-    renderGames();
-  } catch(e){}
-}
+/* ============================== BANNERS ============================== */
 
-function renderGames() {
-  const container = document.getElementById('gamesGrid');
-  container.innerHTML = '';
-  state.games.forEach(g => {
-    const item = document.createElement('div');
-    item.className = 'game-item';
-    item.onclick = () => openGameSheet(g);
-    item.innerHTML = `
-      <div class="game-thumb-wrap">
-        ${g.image_url ? `<img class="game-thumb" src="${g.image_url}" alt="" onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden');">` : ''}
-        <div class="game-thumb-fallback ${g.image_url ? 'hidden' : ''}">🎮</div>
-        <div class="rating-badge">⭐ ${g.rating || 5.0}</div>
-      </div>
-      <div class="game-name">${g.name}</div>
-    `;
-    container.appendChild(item);
-  });
-}
+let bannerIndex = 0, bannerTimer = null;
 
 async function loadBanners() {
-  try {
-    const res = await fetch('/api/banners');
-    state.banners = await res.json();
-    renderBanners();
-  } catch(e){}
-}
-
-function renderBanners() {
-  const track = document.getElementById('bannerTrack');
-  const dots = document.getElementById('bannerDots');
-  track.innerHTML = ''; dots.innerHTML = '';
-  if (!state.banners.length) {
+  const banners = await api("/api/banners");
+  const track = document.getElementById("bannerTrack");
+  const dots = document.getElementById("bannerDots");
+  track.innerHTML = "";
+  dots.innerHTML = "";
+  if (banners.length === 0) {
     track.innerHTML = `
       <div class="banner-placeholder">
-        <div class="banner-placeholder-icon">⚡</div>
-        <div class="banner-placeholder-title">TEZKOR VA ARZON</div>
-        <div class="banner-placeholder-sub">Sevimli o'yinlaringiz uchun hamma narsa</div>
+        <span class="banner-placeholder-icon icon-slot" data-slot="banner_bolt">⚡</span>
+        <span class="banner-placeholder-title">ENG TEZ &amp; ARZON</span>
+        <span class="banner-placeholder-sub">Barcha o'yinlar uchun xizmatlar</span>
       </div>`;
     return;
   }
-  state.banners.forEach((b, i) => {
-    const img = document.createElement('img');
+  banners.forEach((b, i) => {
+    const img = document.createElement("img");
     img.src = b.image_url;
-    if (i === 0) img.className = 'active';
+    if (i === 0) img.classList.add("active");
     track.appendChild(img);
-
-    const dot = document.createElement('span');
-    if (i === 0) dot.className = 'active';
+    const dot = document.createElement("span");
+    if (i === 0) dot.classList.add("active");
     dots.appendChild(dot);
   });
+  bannerIndex = 0;
+  clearInterval(bannerTimer);
+  if (banners.length > 1) {
+    bannerTimer = setInterval(() => {
+      const imgs = track.querySelectorAll("img");
+      const dotEls = dots.querySelectorAll("span");
+      imgs[bannerIndex].classList.remove("active");
+      dotEls[bannerIndex].classList.remove("active");
+      bannerIndex = (bannerIndex + 1) % imgs.length;
+      imgs[bannerIndex].classList.add("active");
+      dotEls[bannerIndex].classList.add("active");
+    }, 3500);
+  }
 }
 
-async function loadReviews() {
-  try {
-    const res = await fetch('/api/reviews');
-    state.reviews = await res.json();
-    renderReviews();
-  } catch(e){}
+/* ============================== GAMES ============================== */
+
+const GAME_EMOJI = [
+  { match: /pubg/i, icon: "🎯", from: "#f97316", to: "#7c2d12" },
+  { match: /free ?fire/i, icon: "🔥", from: "#f43f5e", to: "#7f1d1d" },
+  { match: /mobile ?legends|mlbb/i, icon: "⚔️", from: "#3b82f6", to: "#1e3a8a" },
+  { match: /honor ?of ?kings/i, icon: "👑", from: "#eab308", to: "#78350f" },
+  { match: /stand ?off/i, icon: "🔫", from: "#64748b", to: "#0f172a" },
+  { match: /steam/i, icon: "🎮", from: "#0ea5e9", to: "#0c4a6e" },
+  { match: /telegram/i, icon: "✈️", from: "#38bdf8", to: "#0369a1" },
+];
+
+function gameVisual(name) {
+  const found = GAME_EMOJI.find(g => g.match.test(name));
+  if (found) return found;
+  return { icon: "🎮", from: "#8b5cf6", to: "#4c1d95" };
 }
 
-function renderReviews() {
-  const container = document.getElementById('reviewsList');
-  container.innerHTML = '';
-  if (!state.reviews.length) {
-    container.innerHTML = '<div class="empty-note">Hozircha izohlar yo\'q. Birinchi bo\'lib fikr qoldiring!</div>';
+async function loadGames() {
+  const games = await api("/api/games");
+  STATE.games = games;
+  const grid = document.getElementById("gamesGrid");
+  grid.innerHTML = "";
+  if (games.length === 0) {
+    grid.innerHTML = `<div class="empty-note">${t("no_games")}</div>`;
     return;
   }
-  state.reviews.forEach(r => {
-    const item = document.createElement('div');
-    item.className = 'review-item';
-    item.innerHTML = `
-      <div class="review-name">${r.full_name || r.username || 'Foydalanuvchi'}</div>
-      <div class="review-text">${r.text}</div>
-      <div class="review-stars">${'⭐'.repeat(r.rating || 5)}</div>
-    `;
-    container.appendChild(item);
-  });
+  games.forEach(g => grid.appendChild(renderGameTile(g)));
 }
 
-function switchView(viewName) {
-  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-  document.getElementById(`view-${viewName}`).classList.remove('hidden');
-
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    if (b.getAttribute('data-view') === viewName) b.classList.add('active');
-    else b.classList.remove('active');
-  });
-
-  if (viewName === 'top') loadLeaderboard();
-  if (viewName === 'orders') loadOrders();
-}
-
-document.querySelectorAll('.nav-btn').forEach(b => {
-  b.onclick = () => switchView(b.getAttribute('data-view'));
-});
-
-document.getElementById('topupBtnHome').onclick = () => switchView('hisob');
-document.getElementById('seeAllGames').onclick = () => switchView('home');
-document.getElementById('openProfile').onclick = () => switchView('profile');
-
-async function loadLeaderboard() {
-  try {
-    const res = await fetch('/api/leaderboard');
-    const data = await res.json();
-    const container = document.getElementById('leaderboardList');
-    container.innerHTML = '';
-    data.forEach((item, idx) => {
-      const row = document.createElement('div');
-      row.className = 'lb-item';
-      let rankDisplay = idx + 1;
-      if (idx === 0) rankDisplay = '🥇';
-      if (idx === 1) rankDisplay = '🥈';
-      if (idx === 2) rankDisplay = '🥉';
-
-      row.innerHTML = `
-        <div class="lb-rank ${idx < 3 ? 'medal' : ''}">${rankDisplay}</div>
-        <div class="lb-info">
-          <div class="lb-name">${item.full_name || item.username || 'Foydalanuvchi'}</div>
-          <div class="lb-meta">${item.order_count} ta buyurtma</div>
-        </div>
-        <div class="lb-amount">${fmt(item.total_spent)} so'm</div>
-      `;
-      container.appendChild(row);
+function renderGameTile(g) {
+  const el = document.createElement("div");
+  el.className = "game-item";
+  const v = gameVisual(g.name);
+  const hasImg = g.image_url && g.image_url.trim() !== "";
+  const rating = (g.rating || 5).toFixed(1);
+  el.innerHTML = `
+    <div class="game-thumb-wrap">
+      ${hasImg ? `<img class="game-thumb" src="${g.image_url}" alt="${g.name}">` : ""}
+      <div class="game-thumb-fallback" style="background:linear-gradient(145deg,${v.from},${v.to});${hasImg ? "display:none;" : ""}">${v.icon}</div>
+      <span class="rating-badge">⭐ ${rating}</span>
+    </div>
+    <div class="game-name">${g.name}</div>
+  `;
+  if (hasImg) {
+    const img = el.querySelector(".game-thumb");
+    img.addEventListener("error", () => {
+      img.style.display = "none";
+      el.querySelector(".game-thumb-fallback").style.display = "flex";
     });
-  } catch(e){}
+  }
+  el.addEventListener("click", () => openGame(g.id));
+  return el;
 }
 
-async function loadOrders() {
-  try {
-    const res = await fetch('/api/orders', { headers: getHeaders() });
-    const data = await res.json();
-    const container = document.getElementById('ordersList');
-    container.innerHTML = '';
-    if (!data.length) {
-      container.innerHTML = '<div class="empty-note">Sizda hali buyurtmalar yo\'q.</div>';
-      return;
-    }
-    data.forEach(o => {
-      const item = document.createElement('div');
-      item.className = 'order-item';
-      item.innerHTML = `
-        <div>
-          <div class="order-game">${o.game_name} — ${o.package_label}</div>
-          <div class="order-meta">${o.created_at ? o.created_at.split('T')[0] : ''}</div>
-        </div>
-        <div class="order-price">${fmt(o.price)} so'm</div>
-      `;
-      container.appendChild(item);
-    });
-  } catch(e){}
-}
+let selectedPackageIndex = null;
 
-function openGameSheet(g) {
-  state.selectedGame = g;
-  state.selectedPackageIdx = null;
-
-  document.getElementById('sheetGameName').innerText = g.name;
-  if (g.image_url) {
-    document.getElementById('sheetGameImage').src = g.image_url;
-    document.getElementById('sheetGameImage').classList.remove('hidden');
-    document.getElementById('sheetGameImageFallback').classList.add('hidden');
+function openGame(id) {
+  const g = STATE.games.find(x => x.id === id);
+  if (!g) return;
+  STATE.currentGame = g;
+  selectedPackageIndex = null;
+  document.getElementById("gameOverlayTitle").textContent = g.name;
+  const bannerImg = document.getElementById("gameOverlayImg");
+  const bannerFallback = document.getElementById("gameOverlayFallback");
+  const v = gameVisual(g.name);
+  const showFallback = () => {
+    bannerImg.classList.add("hidden");
+    bannerFallback.classList.remove("hidden");
+    bannerFallback.style.background = `linear-gradient(145deg,${v.from},${v.to})`;
+    bannerFallback.textContent = v.icon;
+  };
+  if (g.image_url && g.image_url.trim() !== "") {
+    bannerImg.src = g.image_url;
+    bannerImg.classList.remove("hidden");
+    bannerFallback.classList.add("hidden");
+    bannerImg.onerror = showFallback;
   } else {
-    document.getElementById('sheetGameImage').classList.add('hidden');
-    document.getElementById('sheetGameImageFallback').classList.remove('hidden');
+    showFallback();
   }
 
-  const pidWrap = document.getElementById('playerIdWrap');
-  if (g.hyperpin_enabled) {
-    pidWrap.classList.remove('hidden');
-    document.getElementById('playerIdInput').value = '';
-    document.getElementById('playerIdResult').className = 'player-id-result hidden';
-  } else {
-    pidWrap.classList.add('hidden');
-  }
+  const playerIdBox = document.getElementById("playerIdBox");
+  const playerIdResult = document.getElementById("playerIdResult");
+  playerIdResult.classList.add("hidden");
+  document.getElementById("playerIdInput").value = "";
+  playerIdBox.classList.toggle("hidden", !g.hyperpin_enabled);
 
-  const pkgGrid = document.getElementById('sheetPackages');
-  pkgGrid.innerHTML = '';
+  const grid = document.getElementById("packagesGrid");
+  grid.innerHTML = "";
   g.packages.forEach((p, idx) => {
-    const card = document.createElement('div');
-    card.className = 'package-card';
-    card.onclick = () => {
-      document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      state.selectedPackageIdx = idx;
-    };
-    card.innerHTML = `
-      <div class="p-icon">💎</div>
+    const el = document.createElement("button");
+    el.className = "package-card";
+    el.dataset.idx = idx;
+    el.innerHTML = `
+      <div class="p-icon">🪙</div>
       <div class="p-label">${p.label}</div>
       <div class="p-price">${fmt(p.price)} so'm</div>
     `;
-    pkgGrid.appendChild(card);
+    el.addEventListener("click", () => {
+      selectedPackageIndex = idx;
+      grid.querySelectorAll(".package-card").forEach(c => c.classList.remove("selected"));
+      el.classList.add("selected");
+      document.getElementById("buySelectedBtn").classList.remove("hidden");
+    });
+    grid.appendChild(el);
   });
-
-  document.getElementById('gameSheet').classList.remove('hidden');
+  document.getElementById("buySelectedBtn").classList.add("hidden");
+  document.getElementById("gameOverlay").classList.remove("hidden");
 }
 
-document.getElementById('closeSheetBtn').onclick = () => {
-  document.getElementById('gameSheet').classList.add('hidden');
-};
-
-document.getElementById('checkPlayerIdBtn').onclick = async () => {
-  const pid = document.getElementById('playerIdInput').value.trim();
-  if (!pid) return;
-  const resBox = document.getElementById('playerIdResult');
-  resBox.className = 'player-id-result';
-  resBox.innerText = 'Tekshirilmoqda...';
-
+async function checkPlayerId() {
+  const g = STATE.currentGame;
+  const playerId = document.getElementById("playerIdInput").value.trim();
+  const resultEl = document.getElementById("playerIdResult");
+  if (!g || !playerId) { toast(t("toast_error")); return; }
+  resultEl.classList.remove("hidden", "ok", "bad");
+  resultEl.textContent = "⏳ ...";
   try {
-    const res = await fetch('/api/hyperpin/check-id', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getHeaders() },
-      body: JSON.stringify({ game_id: state.selectedGame.id, player_id: pid })
+    const res = await api("/api/hyperpin/check-id", {
+      method: "POST",
+      body: JSON.stringify({ game_id: g.id, player_id: playerId }),
     });
-    const data = await res.json();
-    if (data.ok) {
-      resBox.className = 'player-id-result ok';
-      resBox.innerText = '✅ Player ID tasdiqlandi!';
+    const body = res.result && res.result.body;
+    const nickname = body && (body.nickname || body.name || (body.data && body.data.nickname));
+    if (res.ok && nickname) {
+      resultEl.textContent = `✅ ${nickname}`;
+      resultEl.classList.add("ok");
     } else {
-      resBox.className = 'player-id-result bad';
-      resBox.innerText = '❌ Player ID topilmadi yoki xatolik!';
+      resultEl.textContent = "⚠️ ID topilmadi yoki javob formatini tekshirish kerak (dasturchiga xabar bering)";
+      resultEl.classList.add("bad");
     }
-  } catch(e) {
-    resBox.className = 'player-id-result bad';
-    resBox.innerText = '❌ Tekshirishda xatolik!';
+  } catch (e) {
+    resultEl.textContent = "❌ Tekshirishda xatolik";
+    resultEl.classList.add("bad");
   }
-};
+}
 
-document.getElementById('confirmBuyBtn').onclick = async () => {
-  if (state.selectedPackageIdx === null) {
-    showToast('Iltimos, paketni tanlang!');
+async function buySelected() {
+  const g = STATE.currentGame;
+  if (!g || selectedPackageIndex === null) return;
+  const playerId = document.getElementById("playerIdInput").value.trim();
+  if (g.hyperpin_enabled && !playerId) {
+    toast(t("toast_error"));
     return;
   }
-  const pid = document.getElementById('playerIdInput').value.trim();
-  if (state.selectedGame.hyperpin_enabled && !pid) {
-    showToast('Player ID kiriting!');
-    return;
-  }
+  await buyPackage(g.id, selectedPackageIndex, playerId || null);
+}
 
+async function buyPackage(gameId, packageIndex, playerId) {
   try {
-    const res = await fetch('/api/order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getHeaders() },
-      body: JSON.stringify({
-        game_id: state.selectedGame.id,
-        package_index: state.selectedPackageIdx,
-        player_id: pid
-      })
+    const res = await api("/api/order", {
+      method: "POST",
+      body: JSON.stringify({ game_id: gameId, package_index: packageIndex, player_id: playerId }),
     });
-    const data = await res.json();
-    if (data.ok) {
-      state.user.balance = data.balance;
-      renderUser();
-      document.getElementById('gameSheet').classList.add('hidden');
-      showToast('✅ Buyurtma muvaffaqiyatli bajarildi!');
+    STATE.user = STATE.user || {};
+    STATE.user.balance = res.balance;
+    applyUser(STATE.user);
+    document.getElementById("gameOverlay").classList.add("hidden");
+    toast(t("toast_order_ok"));
+  } catch (e) {
+    if (e.data && e.data.error === "insufficient_balance") {
+      toast(t("toast_insufficient"));
+    } else if (e.data && e.data.error === "player_id_required") {
+      toast(t("toast_error"));
+    } else if (e.data && e.data.error === "fulfillment_failed") {
+      toast(t("toast_error"));
+      if (STATE.user && e.data.balance !== undefined) {
+        STATE.user.balance = e.data.balance;
+        applyUser(STATE.user);
+      }
     } else {
-      showToast(`❌ Xatolik: ${data.error}`);
+      toast(t("toast_error"));
     }
-  } catch(e) {
-    showToast('❌ Xatolik yuz berdi!');
   }
-};
+}
 
-document.querySelectorAll('.method-card').forEach(b => {
-  b.onclick = () => {
-    state.topupMethod = b.getAttribute('data-method');
-    document.getElementById('chosenMethod').innerText = state.topupMethod;
-    document.getElementById('hisob-step-methods').classList.add('hidden');
-    document.getElementById('hisob-step-amount').classList.remove('hidden');
-  };
-});
+/* ============================== REVIEWS ============================== */
 
-document.getElementById('backToMethods').onclick = () => {
-  document.getElementById('hisob-step-amount').classList.add('hidden');
-  document.getElementById('hisob-step-methods').classList.remove('hidden');
-};
-
-document.querySelectorAll('.chip').forEach(c => {
-  c.onclick = () => {
-    document.getElementById('amountInput').value = c.getAttribute('data-amt');
-  };
-});
-
-document.getElementById('goToPayment').onclick = async () => {
-  const amt = parseInt(document.getElementById('amountInput').value || 0);
-  if (amt < 1000) {
-    showToast('Eng kam summa 1 000 so\'m!');
+async function loadReviews() {
+  const reviews = await api("/api/reviews");
+  const list = document.getElementById("reviewsList");
+  list.innerHTML = "";
+  if (reviews.length === 0) {
+    list.innerHTML = `<div class="empty-note">${t("no_reviews")}</div>`;
     return;
   }
-  state.topupAmount = amt;
+  reviews.slice(0, 8).forEach(r => {
+    const el = document.createElement("div");
+    el.className = "review-item";
+    const name = r.full_name || r.username || "Foydalanuvchi";
+    el.innerHTML = `
+      <div class="review-name">${name}</div>
+      <div class="review-text">${escapeHtml(r.text)}</div>
+      <div class="review-stars">${"⭐".repeat(Math.max(1, Math.min(5, r.rating)))}</div>
+    `;
+    list.appendChild(el);
+  });
+}
 
-  try {
-    const res = await fetch('/api/topup-info');
-    const info = await res.json();
-    document.getElementById('cardNumber').innerText = info.card_number;
-    document.getElementById('cardHolder').innerText = info.card_holder;
-    document.getElementById('cardBank').innerText = info.card_bank;
-  } catch(e){}
+function escapeHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
 
-  document.getElementById('payAmount').innerText = fmt(amt);
-  document.getElementById('hisob-step-amount').classList.add('hidden');
-  document.getElementById('hisob-step-pay').classList.remove('hidden');
+/* ============================== LEADERBOARD ============================== */
 
+async function loadLeaderboard() {
+  const list = await api("/api/leaderboard");
+  const el = document.getElementById("leaderboardList");
+  el.innerHTML = "";
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty-note">${t("no_leaders")}</div>`;
+    return;
+  }
+  const medals = ["🥇", "🥈", "🥉"];
+  list.forEach((u, i) => {
+    const name = u.full_name || u.username || ("ID " + u.tg_id);
+    const rankHtml = i < 3 ? medals[i] : "#" + (i + 1);
+    const row = document.createElement("div");
+    row.className = "lb-item";
+    row.innerHTML = `
+      <div class="lb-rank ${i < 3 ? "medal" : ""}">${rankHtml}</div>
+      <img class="lb-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=${u.tg_id}">
+      <div class="lb-info">
+        <div class="lb-name">${name}</div>
+        <div class="lb-meta">${u.order_count} buyurtma</div>
+      </div>
+      <div class="lb-amount">${fmt(u.total_spent)} UZS</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ============================== ORDERS ============================== */
+
+async function loadOrders() {
+  const orders = await api("/api/orders");
+  const el = document.getElementById("ordersList");
+  el.innerHTML = "";
+  if (orders.length === 0) {
+    el.innerHTML = `<div class="empty-note">${t("no_orders")}</div>`;
+    return;
+  }
+  orders.forEach(o => {
+    const row = document.createElement("div");
+    row.className = "order-item";
+    const date = new Date(o.created_at).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    row.innerHTML = `
+      <div>
+        <div class="order-game">${o.game_name || "Xizmat"} — ${o.package_label || ""}</div>
+        <div class="order-meta">${date}</div>
+      </div>
+      <div class="order-price">${fmt(o.price)} so'm</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ============================== TOPUP FLOW ============================== */
+
+let topupState = { method: "UZCARD", amount: 0, timerInterval: null, card: null };
+
+function resetTopupFlow() {
+  show("hisob-step-methods");
+}
+
+function show(id) {
+  ["hisob-step-methods", "hisob-step-amount", "hisob-step-pay"].forEach(x => {
+    document.getElementById(x).classList.toggle("hidden", x !== id);
+  });
+}
+
+async function goToAmountStep(method) {
+  topupState.method = method;
+  document.getElementById("chosenMethod").textContent = method;
+  document.getElementById("amountInput").value = "";
+  show("hisob-step-amount");
+}
+
+async function goToPayStep() {
+  const raw = document.getElementById("amountInput").value.replace(/\D/g, "");
+  const amount = parseInt(raw || "0", 10);
+  if (amount < 1000) {
+    toast(t("toast_min_amount"));
+    return;
+  }
+  topupState.amount = amount;
+
+  if (!topupState.card) {
+    topupState.card = await api("/api/topup-info");
+  }
+  document.getElementById("payAmount").textContent = fmt(amount);
+  document.getElementById("cardNumber").textContent = topupState.card.card_number;
+  document.getElementById("cardHolder").textContent = topupState.card.card_holder;
+  document.getElementById("cardBank").textContent = topupState.card.card_bank;
+
+  show("hisob-step-pay");
   startPayTimer(180);
-};
+}
 
 function startPayTimer(seconds) {
-  if (state.payTimerInterval) clearInterval(state.payTimerInterval);
-  let left = seconds;
-  const timerEl = document.getElementById('payTimer');
-  const fillEl = document.getElementById('progressFill');
-
-  state.payTimerInterval = setInterval(() => {
-    left--;
-    const m = Math.floor(left / 60);
-    const s = left % 60;
-    timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-    fillEl.style.width = `${(left / seconds) * 100}%`;
-
-    if (left <= 0) {
-      clearInterval(state.payTimerInterval);
-      showToast('Vaqt tugadi!');
-      document.getElementById('hisob-step-pay').classList.add('hidden');
-      document.getElementById('hisob-step-methods').classList.remove('hidden');
+  clearInterval(topupState.timerInterval);
+  let remaining = seconds;
+  const total = seconds;
+  const label = document.getElementById("payTimer");
+  const fill = document.getElementById("progressFill");
+  const tick = () => {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    label.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+    fill.style.width = (remaining / total * 100) + "%";
+    if (remaining <= 0) {
+      clearInterval(topupState.timerInterval);
+      toast(t("toast_time_up"));
+      resetTopupFlow();
+      return;
     }
-  }, 1000);
+    remaining--;
+  };
+  tick();
+  topupState.timerInterval = setInterval(tick, 1000);
 }
 
-document.getElementById('copyCardBtn').onclick = () => {
-  const num = document.getElementById('cardNumber').innerText.replace(/\s/g, '');
-  navigator.clipboard.writeText(num);
-  showToast('Karta raqami nusxalandi!');
-};
-
-document.getElementById('confirmPaidBtn').onclick = async () => {
+async function confirmPaid() {
   try {
-    const res = await fetch('/api/topup/request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getHeaders() },
-      body: JSON.stringify({ amount: state.topupAmount, method: state.topupMethod })
+    await api("/api/topup/request", {
+      method: "POST",
+      body: JSON.stringify({ amount: topupState.amount, method: topupState.method }),
     });
-    const data = await res.json();
-    if (data.ok) {
-      if (state.payTimerInterval) clearInterval(state.payTimerInterval);
-      document.getElementById('hisob-step-pay').classList.add('hidden');
-      document.getElementById('hisob-step-methods').classList.remove('hidden');
-      showToast('✅ To\'lov so\'rovi yuborildi! Admin tasdiqlashini kuting.');
-    }
-  } catch(e) {
-    showToast('❌ Xatolik yuz berdi!');
+    clearInterval(topupState.timerInterval);
+    toast(t("toast_topup_sent"));
+    resetTopupFlow();
+  } catch (e) {
+    toast(t("toast_error"));
   }
-};
+}
 
-document.getElementById('leaveReviewBtn').onclick = () => {
-  document.getElementById('reviewSheet').classList.remove('hidden');
-};
+/* ============================== EVENTS ============================== */
 
-document.getElementById('closeReviewSheetBtn').onclick = () => {
-  document.getElementById('reviewSheet').classList.add('hidden');
-};
-
-document.querySelectorAll('.star-pick').forEach(s => {
-  s.onclick = () => {
-    const val = parseInt(s.getAttribute('data-s'));
-    state.reviewRating = val;
-    document.querySelectorAll('.star-pick').forEach(sp => {
-      if (parseInt(sp.getAttribute('data-s')) <= val) sp.classList.add('active');
-      else sp.classList.remove('active');
-    });
-  };
-});
-
-document.getElementById('submitReviewBtn').onclick = async () => {
-  const txt = document.getElementById('reviewText').value.trim();
-  if (!txt) {
-    showToast('Fikr matnini yozing!');
-    return;
-  }
+async function openReferralOverlay() {
+  const overlay = document.getElementById("referralOverlay");
+  overlay.classList.remove("hidden");
   try {
-    const res = await fetch('/api/reviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getHeaders() },
-      body: JSON.stringify({ text: txt, rating: state.reviewRating })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      document.getElementById('reviewSheet').classList.add('hidden');
-      document.getElementById('reviewText').value = '';
-      showToast('✅ Fikringiz qo\'shildi!');
-      loadReviews();
-    }
-  } catch(e){
-    showToast('❌ Xatolik!');
+    const data = await api("/api/referral");
+    document.getElementById("refCode").textContent = data.code;
+    document.getElementById("refCode").dataset.link = data.link || `Referal kodim: ${data.code}`;
+    document.getElementById("refBonusAmt").textContent = fmt(data.signup_bonus);
+    document.getElementById("refCommissionPct").textContent = data.commission_percent + "%";
+    document.getElementById("refInvitedCount").textContent = data.invited;
+    document.getElementById("refEarnedAmt").textContent = fmt(data.earned_commission);
+  } catch (e) {
+    toast(t("toast_error"));
   }
-};
+}
 
-document.getElementById('openReferralBtn').onclick = async () => {
+function applyAppBackground(bgUrl) {
+  if (!bgUrl) return;
+  document.body.style.backgroundImage = `url('${bgUrl}')`;
+  document.body.style.backgroundSize = "cover";
+  document.body.style.backgroundPosition = "center";
+  document.body.style.backgroundAttachment = "fixed";
+}
+
+let musicStarted = false;
+async function initMusic() {
   try {
-    const res = await fetch('/api/referral', { headers: getHeaders() });
-    const data = await res.json();
-    document.getElementById('refSignupBonus').innerText = fmt(data.signup_bonus);
-    document.getElementById('refCommissionPercent').innerText = data.commission_percent;
-    document.getElementById('refLinkText').innerText = data.link || `https://t.me/bot?start=ref${data.code}`;
-    document.getElementById('refInvited').innerText = data.invited;
-    document.getElementById('refEarned').innerText = fmt(data.earned_commission);
-    document.getElementById('referralSheet').classList.remove('hidden');
-  } catch(e){}
-};
+    const data = await api("/api/music");
+    if (!data.url) return;
+    const audio = document.getElementById("bgMusic");
+    audio.src = data.url;
+    const startOnce = () => {
+      if (musicStarted) return;
+      musicStarted = true;
+      audio.play().catch(() => { musicStarted = false; });
+      document.removeEventListener("click", startOnce);
+      document.removeEventListener("touchstart", startOnce);
+    };
+    document.addEventListener("click", startOnce);
+    document.addEventListener("touchstart", startOnce);
+  } catch (e) { /* no music configured, ignore */ }
+}
 
-document.getElementById('closeRefSheetBtn').onclick = () => {
-  document.getElementById('referralSheet').classList.add('hidden');
-};
+let selectedRating = 5;
 
-document.getElementById('copyRefBtn').onclick = () => {
-  const link = document.getElementById('refLinkText').innerText;
-  navigator.clipboard.writeText(link);
-  showToast('Referal havola nusxalandi!');
-};
-
-document.getElementById('openTopBtn').onclick = () => switchView('top');
-
-document.getElementById('langBtn').onclick = document.getElementById('langSettingBtn').onclick = async () => {
-  const newLang = state.user.lang === 'uz' ? 'ru' : 'uz';
-  applyLang(newLang);
-  await fetch('/api/lang', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders() },
-    body: JSON.stringify({ lang: newLang })
+function renderStarPicker() {
+  document.querySelectorAll(".star-pick").forEach(s => {
+    s.classList.toggle("active", parseInt(s.dataset.star, 10) <= selectedRating);
   });
-};
+}
 
-document.getElementById('themeBtn').onclick = document.getElementById('themeSettingBtn').onclick = async () => {
-  const newTheme = state.user.theme === 'dark' ? 'light' : 'dark';
-  applyTheme(newTheme);
-  await fetch('/api/theme', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders() },
-    body: JSON.stringify({ lang: newTheme })
+async function toggleLang() {
+  if (!STATE.user) { toast(t("toast_error")); return; }
+  const next = STATE.user.lang === "uz" ? "ru" : "uz";
+  const res = await api("/api/lang", { method: "POST", body: JSON.stringify({ lang: next }) });
+  STATE.user.lang = res.lang;
+  applyI18n();
+  loadGames(); loadReviews();
+  const activeView = document.querySelector(".nav-btn.active");
+  if (activeView && activeView.dataset.view === "top") loadLeaderboard();
+  if (activeView && activeView.dataset.view === "orders") loadOrders();
+}
+
+async function toggleTheme() {
+  const next = document.body.classList.contains("light") ? "dark" : "light";
+  const res = await api("/api/theme", { method: "POST", body: JSON.stringify({ theme: next }) });
+  STATE.user.theme = res.theme;
+  document.body.classList.toggle("light", res.theme === "light");
+  const themeIcon = res.theme === "light" ? "☀️" : "🌙";
+  document.getElementById("themeBtn").textContent = themeIcon;
+  const wrap = document.getElementById("themeIconWrap");
+  const emojiEl = document.getElementById("themeEmoji");
+  if (emojiEl) emojiEl.textContent = themeIcon;
+  if (wrap) {
+    wrap.classList.add("spin");
+    setTimeout(() => wrap.classList.remove("spin"), 400);
+  }
+}
+
+function bindEvents() {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
   });
-};
 
-document.getElementById('adminClearReviewsBtn').onclick = async () => {
-  if (!confirm('Barcha izohlarni o\'chirmoqchimisiz?')) return;
-  try {
-    const res = await fetch('/api/admin/clear-reviews', {
-      method: 'POST',
-      headers: getHeaders()
+  document.getElementById("topupBtnHome").addEventListener("click", () => showView("hisob"));
+  document.getElementById("topupBtnProfile").addEventListener("click", () => showView("hisob"));
+  document.getElementById("topDonatersBtn").addEventListener("click", () => showView("top"));
+  document.getElementById("seeAllGames").addEventListener("click", () => {
+    document.getElementById("gamesGrid").scrollIntoView({ behavior: "smooth" });
+  });
+
+  document.getElementById("openProfile").addEventListener("click", () => showView("profile"));
+
+  // banner click opens the top-up view
+  document.getElementById("bannerWrap").addEventListener("click", () => showView("hisob"));
+
+  document.getElementById("langBtn").addEventListener("click", toggleLang);
+  const langBtn2 = document.getElementById("langBtn2");
+  if (langBtn2) langBtn2.addEventListener("click", toggleLang);
+
+  document.getElementById("themeBtn").addEventListener("click", toggleTheme);
+  const themeBtn2 = document.getElementById("themeBtn2");
+  if (themeBtn2) themeBtn2.addEventListener("click", toggleTheme);
+
+  document.querySelectorAll(".method-card").forEach(btn => {
+    btn.addEventListener("click", () => goToAmountStep(btn.dataset.method));
+  });
+  document.querySelectorAll(".chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("amountInput").value = btn.dataset.amt;
     });
-    if (res.ok) {
-      showToast('Izohlar tozalandi!');
-      loadReviews();
-    }
-  } catch(e){}
-};
+  });
+  document.getElementById("goToPayment").addEventListener("click", goToPayStep);
+  document.getElementById("backToMethods").addEventListener("click", () => show("hisob-step-methods"));
+  document.getElementById("confirmPaidBtn").addEventListener("click", confirmPaid);
+  document.getElementById("copyCardBtn").addEventListener("click", () => {
+    const num = document.getElementById("cardNumber").textContent;
+    navigator.clipboard && navigator.clipboard.writeText(num.replace(/\s/g, ""));
+    toast(t("toast_copied"));
+  });
 
-init();
+  document.getElementById("closeGameOverlay").addEventListener("click", () => {
+    document.getElementById("gameOverlay").classList.add("hidden");
+  });
+  const checkIdBtn = document.getElementById("checkIdBtn");
+  if (checkIdBtn) checkIdBtn.addEventListener("click", checkPlayerId);
+  const buySelectedBtn = document.getElementById("buySelectedBtn");
+  if (buySelectedBtn) buySelectedBtn.addEventListener("click", buySelected);
+
+  document.getElementById("leaveReviewBtn").addEventListener("click", () => {
+    selectedRating = 5;
+    renderStarPicker();
+    document.getElementById("reviewOverlay").classList.remove("hidden");
+  });
+  document.getElementById("closeReviewOverlay").addEventListener("click", () => {
+    document.getElementById("reviewOverlay").classList.add("hidden");
+  });
+  document.querySelectorAll(".star-pick").forEach(s => {
+    s.addEventListener("click", () => {
+      selectedRating = parseInt(s.dataset.star, 10);
+      renderStarPicker();
+    });
+  });
+  document.getElementById("submitReviewBtn").addEventListener("click", async () => {
+    const text = document.getElementById("reviewText").value.trim();
+    if (!text) return;
+    try {
+      await api("/api/reviews", { method: "POST", body: JSON.stringify({ text, rating: selectedRating }) });
+      document.getElementById("reviewText").value = "";
+      document.getElementById("reviewOverlay").classList.add("hidden");
+      toast(t("toast_review_thanks"));
+      loadReviews();
+    } catch (e) {
+      toast(t("toast_error"));
+    }
+  });
+
+  document.getElementById("inviteBtn").addEventListener("click", openReferralOverlay);
+  document.getElementById("closeReferralOverlay").addEventListener("click", () => {
+    document.getElementById("referralOverlay").classList.add("hidden");
+  });
+  document.getElementById("copyRefLinkBtn").addEventListener("click", () => {
+    const link = document.getElementById("refCode").dataset.link || "";
+    navigator.clipboard && navigator.clipboard.writeText(link);
+    toast(t("toast_copied"));
+  });
+  document.getElementById("shareRefLinkBtn").addEventListener("click", () => {
+    const link = document.getElementById("refCode").dataset.link || "";
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Botimga qo'shiling, bonus oling! 🎁")}`;
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(shareUrl);
+    else window.open(shareUrl, "_blank");
+  });
+
+  const clearReviewsBtn = document.getElementById("clearReviewsBtn");
+  if (clearReviewsBtn) {
+    clearReviewsBtn.addEventListener("click", async () => {
+      try {
+        await api("/api/admin/clear-reviews", { method: "POST" });
+        toast(t("toast_reviews_cleared"));
+        loadReviews();
+      } catch (e) {
+        toast(t("toast_forbidden"));
+      }
+    });
+  }
+  const openAdminPanelBtn = document.getElementById("openAdminPanelBtn");
+  if (openAdminPanelBtn) {
+    openAdminPanelBtn.addEventListener("click", () => {
+      if (STATE.botUsername) {
+        const link = `https://t.me/${STATE.botUsername}`;
+        if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
+        else window.open(link, "_blank");
+      }
+      toast(t("toast_admin_hint"));
+    });
+  }
+}
+
+boot();
+
+
 </script>
 </body>
 </html>
