@@ -66,12 +66,13 @@ a{text-decoration:none;color:inherit;}
 .icon-circle-sm{padding:0;overflow:hidden;}
 .icon-slot{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
 .icon-slot img{width:100%;height:100%;object-fit:contain;border-radius:4px;}
-.icon-inline{width:16px;height:16px;font-size:14px;vertical-align:-3px;margin-right:2px;}
-.round-action-icon .icon-slot{width:60%;height:60%;font-size:22px;}
-.round-action-icon.small .icon-slot{font-size:18px;}
-.icon-btn .icon-slot{width:20px;height:20px;font-size:16px;}
-.nav-ic .icon-slot{font-size:19px;opacity:.75;}
-.nav-btn.active .icon-ic .icon-slot,.nav-btn.active .icon-slot{opacity:1;}
+.icon-inline{width:20px;height:20px;font-size:17px;vertical-align:-4px;margin-right:3px;}
+.round-action-icon .icon-slot{width:65%;height:65%;font-size:26px;}
+.round-action-icon.small .icon-slot{font-size:20px;}
+.icon-btn .icon-slot{width:22px;height:22px;font-size:18px;}
+.nav-ic .icon-slot{font-size:21px;opacity:.75;}
+.nav-btn.active .icon-slot{opacity:1;}
+.page-title .icon-slot{font-size:22px;vertical-align:-3px;}
 
 /* ---------- views ---------- */
 .view{padding:14px 16px 6px;}
@@ -215,9 +216,19 @@ a{text-decoration:none;color:inherit;}
 .progress-bar{height:4px;background:var(--gray-btn);border-radius:4px;overflow:hidden;margin-bottom:16px;}
 .progress-fill{height:100%;background:var(--accent);width:100%;transition:width 1s linear;}
 
-.card-box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.card-box{
+  background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;
+  border:1px solid rgba(139,92,246,.35);
+  box-shadow:0 0 24px 2px rgba(139,92,246,.28), inset 0 0 30px rgba(139,92,246,.06);
+}
 .card-label{font-size:12px;color:var(--text-dim);margin-bottom:4px;}
-.card-number{font-size:22px;font-weight:800;letter-spacing:.02em;margin-bottom:10px;}
+.card-number{
+  font-size:22px;font-weight:800;letter-spacing:.04em;margin-bottom:10px;
+  background:linear-gradient(90deg,#c4b5fd,#8b5cf6,#c4b5fd);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:200% auto;animation:shine 3s linear infinite;
+}
+@keyframes shine{to{background-position:200% center;}}
 .card-holder-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--text-dim);}
 .badge{background:var(--green);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;}
 
@@ -247,25 +258,34 @@ a{text-decoration:none;color:inherit;}
 /* ---------- round action buttons (profile) ---------- */
 .round-actions-row{display:flex;gap:12px;margin:14px 0;}
 .round-action{
-  flex:1;background:var(--card);border-radius:20px;padding:18px 10px;
+  flex:1;background:var(--card);border-radius:26px;padding:20px 10px;
   display:flex;flex-direction:column;align-items:center;gap:10px;
-  text-align:center;border:1px solid rgba(139,92,246,.12);
+  text-align:center;border:1px solid rgba(139,92,246,.25);
+  transition:transform .12s ease, box-shadow .2s ease;
 }
+.round-action:active{transform:scale(.95);}
 .round-action-icon{
-  width:52px;height:52px;border-radius:50%;
+  width:58px;height:58px;border-radius:50%;
   background:linear-gradient(145deg,var(--accent),var(--accent-2));
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 16px rgba(139,92,246,.35);
+  box-shadow:0 0 18px 2px rgba(139,92,246,.55), 0 6px 16px rgba(139,92,246,.35);
+  animation:neonPulse 2.4s ease-in-out infinite;
 }
-.round-action-icon.small{width:40px;height:40px;}
+.round-action-icon.small{width:42px;height:42px;}
 .round-action-label{font-size:12px;font-weight:700;line-height:1.3;}
 
-/* ---------- settings row (til / mavzu / support) ---------- */
-.settings-row{display:flex;gap:10px;margin:10px 0;}
+@keyframes neonPulse{
+  0%,100%{box-shadow:0 0 12px 1px rgba(139,92,246,.45),0 6px 16px rgba(139,92,246,.3);}
+  50%{box-shadow:0 0 24px 6px rgba(139,92,246,.7),0 6px 20px rgba(139,92,246,.45);}
+}
+
+/* ---------- settings row (til / mavzu / support) — pill shaped ---------- */
+.settings-row{display:flex;flex-direction:column;gap:10px;margin:10px 0;}
 .settings-item{
-  flex:1;background:var(--card);border-radius:18px;padding:14px 6px;
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  font-size:11px;font-weight:700;color:var(--text);text-align:center;
+  width:100%;background:var(--card);border-radius:999px;padding:12px 20px;
+  display:flex;flex-direction:row;align-items:center;gap:14px;
+  font-size:14px;font-weight:700;color:var(--text);text-align:left;
+  border:1px solid rgba(139,92,246,.2);
 }
 #themeIconWrap{transition:transform .35s ease;font-size:18px;display:flex;align-items:center;justify-content:center;}
 #themeIconWrap.spin{transform:rotate(360deg);}
@@ -334,7 +354,13 @@ a{text-decoration:none;color:inherit;}
 .nav-ic{font-size:19px;}
 .nav-btn.active{color:var(--accent);background:rgba(139,92,246,.12);}
 
-/* ---------- toast ---------- */
+/* ---------- referral overlay ---------- */
+.ref-desc{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:14px;}
+.ref-code-box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;text-align:center;}
+.ref-stats-row{display:flex;gap:10px;margin-top:14px;}
+.ref-stat{flex:1;background:var(--card);border-radius:14px;padding:14px;text-align:center;}
+.ref-stat-value{font-size:20px;font-weight:800;color:var(--accent);}
+.ref-stat-label{font-size:11px;color:var(--text-dim);margin-top:4px;}
 .toast{
   position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
   background:var(--card-2);color:var(--text);padding:10px 18px;border-radius:12px;
@@ -384,7 +410,7 @@ a{text-decoration:none;color:inherit;}
     </section>
 
     <section class="section-head">
-      <h2>🎮 <span data-i18n="popular_games">O'yinlar mashhur</span></h2>
+      <h2><span class="icon-slot" data-slot="games_header">🎮</span> <span data-i18n="popular_games">O'yinlar mashhur</span></h2>
       <button class="link-btn" id="seeAllGames" data-i18n="see_all">Barchasi</button>
     </section>
     <div class="games-grid" id="gamesGrid"></div>
@@ -393,13 +419,13 @@ a{text-decoration:none;color:inherit;}
       <h2><span class="icon-slot icon-inline" data-slot="reviews">💬</span> <span data-i18n="reviews_title">Odamlar fikri</span></h2>
     </section>
     <div class="reviews-list" id="reviewsList"></div>
-    <button class="btn-secondary full" id="leaveReviewBtn">✍️ <span data-i18n="leave_review">Fikr qoldirish</span></button>
+    <button class="btn-secondary full" id="leaveReviewBtn"><span class="icon-slot" data-slot="leave_review">✍️</span> <span data-i18n="leave_review">Fikr qoldirish</span></button>
 
   </main>
 
   <!-- ===================== TOP VIEW ===================== -->
   <main class="view hidden" id="view-top">
-    <h1 class="page-title">🏆 <span data-i18n="top_title">TOP Xaridorlar</span></h1>
+    <h1 class="page-title"><span class="icon-slot" data-slot="top_header">🏆</span> <span data-i18n="top_title">TOP Xaridorlar</span></h1>
     <div class="leaderboard" id="leaderboardList"></div>
   </main>
 
@@ -467,7 +493,7 @@ a{text-decoration:none;color:inherit;}
 
   <!-- ===================== BUYURTMALAR VIEW ===================== -->
   <main class="view hidden" id="view-orders">
-    <h1 class="page-title">🧾 <span data-i18n="orders_title">Buyurtmalarim</span></h1>
+    <h1 class="page-title"><span class="icon-slot" data-slot="orders_header">🧾</span> <span data-i18n="orders_title">Buyurtmalarim</span></h1>
     <div class="orders-list" id="ordersList"></div>
   </main>
 
@@ -507,7 +533,7 @@ a{text-decoration:none;color:inherit;}
         <span class="round-action-icon small" id="themeIconWrap"><span id="themeEmoji">🌙</span></span>
         <span data-i18n="settings_theme">Mavzu</span>
       </button>
-      <a class="settings-item" id="supportBtn2" href="#">
+      <a class="settings-item" id="supportBtn2" href="https://t.me/x7fan">
         <span class="round-action-icon small"><span class="icon-slot" data-slot="support2">🆘</span></span>
         <span data-i18n="settings_support">Support</span>
       </a>
@@ -556,6 +582,36 @@ a{text-decoration:none;color:inherit;}
     </div>
   </div>
 
+  <!-- ===================== REFERRAL OVERLAY ===================== -->
+  <div class="overlay hidden" id="referralOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <button class="icon-btn" id="closeReferralOverlay">✕</button>
+        <span>🤝 Do'stlarni taklif qiling</span>
+      </div>
+      <p class="ref-desc">Do'stingiz sizning havolangiz orqali botga kirsa, sizga darhol <b id="refBonusAmt">200</b> so'm bonus tushadi. Bundan tashqari, u xarid qilganda ham sizga har safar <b id="refCommissionPct">0.05%</b> komissiya tushib turadi!</p>
+
+      <div class="ref-code-box">
+        <div class="card-label">Sizning referal kodingiz</div>
+        <div class="card-number" id="refCode">-</div>
+        <button class="btn-secondary full" id="copyRefLinkBtn">📋 Havolani nusxalash</button>
+      </div>
+
+      <button class="btn-primary full" id="shareRefLinkBtn">📤 Do'stlarga ulashish</button>
+
+      <div class="ref-stats-row">
+        <div class="ref-stat">
+          <div class="ref-stat-value" id="refInvitedCount">0</div>
+          <div class="ref-stat-label">Taklif qilingan</div>
+        </div>
+        <div class="ref-stat">
+          <div class="ref-stat-value" id="refEarnedAmt">0</div>
+          <div class="ref-stat-label">Ishlab topilgan (so'm)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== REVIEW OVERLAY ===================== -->
   <div class="overlay hidden" id="reviewOverlay">
     <div class="sheet">
@@ -577,6 +633,9 @@ a{text-decoration:none;color:inherit;}
 
   <!-- ===================== TOAST ===================== -->
   <div class="toast hidden" id="toast"></div>
+
+  <!-- background music, started only after the first user tap (autoplay policy) -->
+  <audio id="bgMusic" loop preload="none"></audio>
 
   <!-- ===================== BOTTOM NAV ===================== -->
   <nav class="bottom-nav">
@@ -814,6 +873,7 @@ async function boot() {
   await safeLoad(loadGames);
   await safeLoad(loadBanners);
   await safeLoad(loadReviews);
+  await safeLoad(initMusic);
 
   startLivePolling();
 }
@@ -1280,6 +1340,41 @@ async function confirmPaid() {
 
 /* ============================== EVENTS ============================== */
 
+async function openReferralOverlay() {
+  const overlay = document.getElementById("referralOverlay");
+  overlay.classList.remove("hidden");
+  try {
+    const data = await api("/api/referral");
+    document.getElementById("refCode").textContent = data.code;
+    document.getElementById("refCode").dataset.link = data.link || `Referal kodim: ${data.code}`;
+    document.getElementById("refBonusAmt").textContent = fmt(data.signup_bonus);
+    document.getElementById("refCommissionPct").textContent = data.commission_percent + "%";
+    document.getElementById("refInvitedCount").textContent = data.invited;
+    document.getElementById("refEarnedAmt").textContent = fmt(data.earned_commission);
+  } catch (e) {
+    toast(t("toast_error"));
+  }
+}
+
+let musicStarted = false;
+async function initMusic() {
+  try {
+    const data = await api("/api/music");
+    if (!data.url) return;
+    const audio = document.getElementById("bgMusic");
+    audio.src = data.url;
+    const startOnce = () => {
+      if (musicStarted) return;
+      musicStarted = true;
+      audio.play().catch(() => { musicStarted = false; });
+      document.removeEventListener("click", startOnce);
+      document.removeEventListener("touchstart", startOnce);
+    };
+    document.addEventListener("click", startOnce);
+    document.addEventListener("touchstart", startOnce);
+  } catch (e) { /* no music configured, ignore */ }
+}
+
 let selectedRating = 5;
 
 function renderStarPicker() {
@@ -1394,10 +1489,20 @@ function bindEvents() {
     }
   });
 
-  document.getElementById("inviteBtn").addEventListener("click", () => {
-    const link = `https://t.me/share/url?url=Assalomu alaykum! Mening havolam orqali ro'yxatdan o'ting va bonus oling.`;
-    if (tg && tg.openTelegramLink) tg.openTelegramLink(link);
-    else window.open(link, "_blank");
+  document.getElementById("inviteBtn").addEventListener("click", openReferralOverlay);
+  document.getElementById("closeReferralOverlay").addEventListener("click", () => {
+    document.getElementById("referralOverlay").classList.add("hidden");
+  });
+  document.getElementById("copyRefLinkBtn").addEventListener("click", () => {
+    const link = document.getElementById("refCode").dataset.link || "";
+    navigator.clipboard && navigator.clipboard.writeText(link);
+    toast(t("toast_copied"));
+  });
+  document.getElementById("shareRefLinkBtn").addEventListener("click", () => {
+    const link = document.getElementById("refCode").dataset.link || "";
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Botimga qo'shiling, bonus oling! 🎁")}`;
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(shareUrl);
+    else window.open(shareUrl, "_blank");
   });
 
   const clearReviewsBtn = document.getElementById("clearReviewsBtn");
